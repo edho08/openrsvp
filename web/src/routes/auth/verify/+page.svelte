@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { api } from '$lib/api/client';
 	import { currentUser } from '$lib/stores/auth';
@@ -22,8 +22,10 @@
 		}
 
 		// Strip the raw token from the URL/history before doing anything else,
-		// so it does not linger in browser history.
-		replaceState('/auth/verify', {});
+		// so it does not linger in browser history. Use the native history API
+		// here instead of SvelteKit's replaceState helper: the static build's
+		// navigation runtime can throw before the verification request starts.
+		window.history.replaceState(null, '', '/auth/verify');
 
 		try {
 			const result = await api.post<{ organizer: Organizer }>('/auth/verify', { token });
