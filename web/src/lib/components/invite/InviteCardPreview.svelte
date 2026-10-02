@@ -1,5 +1,9 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+	import GrandOpeningInvite from './GrandOpeningInvite.svelte';
+
 	interface Props {
+		rsvpContent?: Snippet;
 		templateId: string;
 		heading: string;
 		body: string;
@@ -8,13 +12,17 @@
 		secondaryColor: string;
 		font: string;
 		eventTitle: string;
+		eventDescription?: string;
 		eventDate: string;
+		endDate?: string;
 		eventLocation: string;
-		customData?: string;
+		customData?: string | Record<string, unknown>;
 		timezone?: string;
+		recipientName?: string;
 	}
 
 	let {
+		rsvpContent,
 		templateId,
 		heading,
 		body,
@@ -23,15 +31,20 @@
 		secondaryColor,
 		font,
 		eventTitle,
+		eventDescription = '',
 		eventDate,
+		endDate,
 		eventLocation,
 		customData = '{}',
-		timezone
+		timezone,
+		recipientName = ''
 	}: Props = $props();
 
 	const parsedCustomData = $derived.by(() => {
 		try {
-			return JSON.parse(customData || '{}');
+			const parsed: unknown = typeof customData === 'object' ? customData : JSON.parse(customData || '{}');
+			return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+				? parsed as Record<string, unknown> : {};
 		} catch {
 			return {};
 		}
@@ -187,7 +200,27 @@
 	}
 </script>
 
-<div
+
+{#if templateId === 'kasir-pintar-grand-opening'}
+	<GrandOpeningInvite
+		{rsvpContent}
+		{heading}
+		{body}
+		{footer}
+		{primaryColor}
+		{secondaryColor}
+		{font}
+		eventTitle={eventTitle}
+		eventDescription={eventDescription}
+		eventDate={eventDate}
+		{endDate}
+		eventLocation={eventLocation}
+		{timezone}
+		customData={parsedCustomData}
+		recipientName={recipientName || (typeof parsedCustomData.recipientName === 'string' ? parsedCustomData.recipientName : '')}
+	/>
+{:else}
+	<div
 	class="invite-card {templateConfig.wrapperClass}"
 	style="
 		--primary: {primaryColor || '#E54666'};
@@ -331,6 +364,7 @@
 		</div>
 	{/if}
 </div>
+{/if}
 
 <style>
 	.invite-card {

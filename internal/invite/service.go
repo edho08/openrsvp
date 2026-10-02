@@ -114,6 +114,7 @@ var builtInTemplates = []*Template{
 	{ID: "tropical-vibes", Name: "Tropical Vibes", Description: "Warm colors and wave decorations for a beachy, tropical event."},
 	{ID: "vintage-retro", Name: "Vintage Retro", Description: "Double border, uppercase heading, and sepia tones for a classic vibe."},
 	{ID: "chalkboard", Name: "Chalkboard", Description: "Dark background with chalk-style text for a cozy, handwritten feel."},
+	{ID: "kasir-pintar-grand-opening", Name: "Kasir Pintar Grand Opening", Description: "Full-page branded invitation with event story, media, location, and RSVP call-to-action."},
 }
 
 // Service contains the business logic for invite card management.

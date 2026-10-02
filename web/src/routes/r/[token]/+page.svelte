@@ -2,7 +2,8 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api/client';
-	import type { PublicEvent, Attendee, Message, PublicAttendance, EventQuestion, QuestionAnswer, ApiError } from '$lib/types';
+	import type { PublicEvent, Attendee, Message, PublicAttendance, EventQuestion, QuestionAnswer, ApiError, InviteCard } from '$lib/types';
+	import InviteCardPreview from '$lib/components/invite/InviteCardPreview.svelte';
 	import QuestionRenderer from '$lib/components/questions/QuestionRenderer.svelte';
 	import AddToCalendar from '$lib/components/ui/AddToCalendar.svelte';
 	import GuestFeedback from '$lib/components/GuestFeedback.svelte';
@@ -10,6 +11,7 @@
 	interface RsvpData {
 		attendee: Attendee;
 		event: PublicEvent;
+		invite?: InviteCard;
 		attendance?: PublicAttendance;
 		shareToken?: string;
 		questions?: EventQuestion[];
@@ -21,6 +23,7 @@
 	let error = $state('');
 	let attendee = $state<Attendee | null>(null);
 	let eventData = $state<PublicEvent | null>(null);
+	let inviteData = $state<InviteCard | null>(null);
 	let attendance = $state<PublicAttendance | null>(null);
 	let shareToken = $state('');
 	let showAllNames = $state(false);
@@ -56,6 +59,7 @@
 	let loadingMessages = $state(false);
 
 	const token = $derived($page.params.token);
+	const isGrandOpening = $derived(inviteData?.templateId === 'kasir-pintar-grand-opening');
 
 	// RSVP closed check
 	const rsvpsClosed = $derived(eventData?.rsvpsClosed === true);
@@ -76,6 +80,7 @@
 			const result = await api.get<{ data: RsvpData }>(`/rsvp/public/token/${token}`);
 			attendee = result.data.attendee;
 			eventData = result.data.event;
+			inviteData = result.data.invite ?? null;
 			attendance = result.data.attendance ?? null;
 			shareToken = result.data.shareToken ?? '';
 			eventQuestions = result.data.questions ?? [];
@@ -272,8 +277,14 @@
 	<title>Manage Your RSVP{eventData ? ` — ${eventData.title}` : ''} — OpenRSVP</title>
 </svelte:head>
 
-<div class="min-h-screen px-4 py-8 sm:py-12" style="background: linear-gradient(135deg, #FAFAF9 0%, #FFF1F3 50%, #FDE8EC 100%);">
-	<div class="max-w-lg mx-auto">
+<div
+	class="min-h-screen px-4 py-8 sm:py-12"
+	class:grand-opening-page={isGrandOpening}
+	style={isGrandOpening
+		? 'background: linear-gradient(135deg, #fffaf1 0%, #eef7ef 52%, #dcefe4 100%);'
+		: 'background: linear-gradient(135deg, #FAFAF9 0%, #FFF1F3 50%, #FDE8EC 100%);'}
+>
+	<div class:max-w-lg={!isGrandOpening} class:max-w-6xl={isGrandOpening} class="mx-auto">
 		{#if loading}
 			<div class="flex items-center justify-center min-h-[60vh]">
 				<div class="flex flex-col items-center gap-4">
@@ -294,15 +305,40 @@
 				</div>
 			</div>
 		{:else if attendee && eventData}
-			<!-- Event Info Header -->
-			<div class="text-center mb-6">
-				<h1 class="font-display text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">{eventData.title}</h1>
-				<p class="text-neutral-500 text-sm">{formatDate(eventData.eventDate, eventData.timezone)}</p>
-				{#if eventData.location}
-					<p class="text-neutral-500 text-sm">{eventData.location}</p>
-				{/if}
-			</div>
+			{#if isGrandOpening && inviteData}
+				<div class="mb-8">
+					<InviteCardPreview
+						rsvpContent={responseContent}
+						templateId={inviteData.templateId}
+						heading={inviteData.heading}
+						body={inviteData.body}
+						footer={inviteData.footer}
+						primaryColor={inviteData.primaryColor}
+						secondaryColor={inviteData.secondaryColor}
+						font={inviteData.font}
+						eventTitle={eventData.title}
+						eventDescription={eventData.description}
+						eventDate={eventData.eventDate}
+						endDate={eventData.endDate}
+						eventLocation={eventData.location}
+						customData={typeof inviteData.customData === 'string' ? inviteData.customData : JSON.stringify(inviteData.customData || {})}
+						timezone={eventData.timezone}
+						recipientName={attendee.name}
+					/>
+				</div>
+			{:else}
+				<!-- Event Info Header -->
+				<div class="text-center mb-6">
+					<h1 class="font-display text-2xl sm:text-3xl font-bold text-neutral-900 mb-1">{eventData.title}</h1>
+					<p class="text-neutral-500 text-sm">{formatDate(eventData.eventDate, eventData.timezone)}</p>
+					{#if eventData.location}
+						<p class="text-neutral-500 text-sm">{eventData.location}</p>
+					{/if}
+				</div>
+			{/if}
 
+			{#snippet responseContent()}
+			{#if attendee && eventData}
 			<!-- Add to Calendar (only for attending or maybe) -->
 			{#if shareToken && (attendee.rsvpStatus === 'attending' || attendee.rsvpStatus === 'maybe')}
 				<div class="mb-6 flex justify-center">
@@ -367,7 +403,7 @@
 			{/if}
 
 			<!-- RSVP Details Card -->
-			<div class="bg-surface rounded-xl shadow-lg border border-neutral-200 p-6 sm:p-8 mb-6">
+			<div id={isGrandOpening ? undefined : 'rsvp-form'} class="w-full bg-surface rounded-xl shadow-lg border border-neutral-200 p-6 sm:p-8 mb-6">
 				<div class="flex items-center justify-between mb-6">
 					<h2 class="font-display text-lg font-semibold text-neutral-900">Your RSVP</h2>
 					{#if !editing && !rsvpsClosed && attendee.rsvpStatus !== 'waitlisted'}
@@ -699,6 +735,9 @@
 				{/if}
 			</div>
 
+			{/if}
+			{/snippet}
+			{#if !isGrandOpening}{@render responseContent()}{/if}
 			<!-- Powered by -->
 			<div class="mt-8 flex flex-col items-center gap-2 text-center">
 				<GuestFeedback source={$page.url.pathname} />

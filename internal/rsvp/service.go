@@ -511,6 +511,7 @@ func (s *Service) SubmitRSVP(ctx context.Context, shareToken string, req RSVPReq
 type RsvpWithEvent struct {
 	Attendee         *Attendee          `json:"attendee"`
 	Event            *event.PublicEvent `json:"event"`
+	Invite           *invite.InviteCard `json:"invite,omitempty"`
 	Attendance       *PublicAttendance  `json:"attendance,omitempty"`
 	ShareToken       string             `json:"shareToken,omitempty"`
 	WaitlistPosition *int               `json:"waitlistPosition,omitempty"`
@@ -549,6 +550,15 @@ func (s *Service) GetByTokenWithEvent(ctx context.Context, rsvpToken string) (*R
 		Attendee:   a,
 		Event:      ev.ToPublic(),
 		ShareToken: ev.ShareToken,
+	}
+
+	// The RSVP management link can render the same branded invitation while
+	// still personalizing it with the attendee name. If invite data is not
+	// available, keep the existing RSVP management flow working unchanged.
+	if s.inviteService != nil {
+		if card, cardErr := s.inviteService.GetPreview(ctx, a.EventID); cardErr == nil {
+			result.Invite = card
+		}
 	}
 
 	if ev.ShowHeadcount || ev.ShowGuestList {

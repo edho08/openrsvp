@@ -208,6 +208,35 @@ func TestGetPublicInvite(t *testing.T) {
 	assert.Equal(t, "balloon-party", data.Invite.TemplateID)
 }
 
+func TestGetByTokenWithEventIncludesInvite(t *testing.T) {
+	svc, eventSvc, authStore := setupRSVP(t)
+	ctx := context.Background()
+
+	org, err := authStore.CreateOrganizer(ctx, "org@example.com")
+	require.NoError(t, err)
+	ev := createPublishedEvent(t, eventSvc, org.ID)
+
+	_, err = svc.inviteService.Save(ctx, ev.ID, invite.SaveInviteRequest{
+		TemplateID: "kasir-pintar-grand-opening",
+		Heading:    "Grand Opening",
+		CustomData: `{"brandName":"Kasir Pintar","videoUrl":"https://example.com/video"}`,
+	})
+	require.NoError(t, err)
+
+	attendee, err := svc.SubmitRSVP(ctx, ev.ShareToken, RSVPRequest{
+		Name:       "Ayu",
+		Email:      strPtr("ayu@example.com"),
+		RSVPStatus: "attending",
+	})
+	require.NoError(t, err)
+
+	data, err := svc.GetByTokenWithEvent(ctx, attendee.RSVPToken)
+	require.NoError(t, err)
+	require.NotNil(t, data.Invite)
+	assert.Equal(t, "kasir-pintar-grand-opening", data.Invite.TemplateID)
+	assert.Contains(t, data.Invite.CustomData, `"brandName":"Kasir Pintar"`)
+}
+
 func TestGetPublicInviteDraftEvent(t *testing.T) {
 	svc, eventSvc, authStore := setupRSVP(t)
 	ctx := context.Background()

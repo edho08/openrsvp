@@ -58,6 +58,10 @@
 	let deletingCommentId = $state('');
 
 	const token = $derived($page.params.token ?? '');
+	const isGrandOpening = $derived(inviteData?.templateId === 'kasir-pintar-grand-opening');
+	const linkedRecipientName = $derived(
+		($page.url.searchParams.get('to') || '').trim().slice(0, 120)
+	);
 
 	// A comment is "mine" if I posted it this session, or its author matches my
 	// submitted name (best-effort client-side hint; the server is authoritative).
@@ -302,8 +306,12 @@
 	<title>{eventData ? `${eventData.title} — You're Invited` : "You're Invited"} — OpenRSVP</title>
 </svelte:head>
 
-<div class="invite-page min-h-screen flex flex-col items-center justify-start px-4 py-8 sm:py-12"
-	style="background: linear-gradient(135deg, #FAFAF9 0%, #FFF1F3 50%, #FDE8EC 100%);"
+<div
+	class="invite-page min-h-screen flex flex-col items-center justify-start px-4 py-8 sm:py-12"
+	class:grand-opening-page={isGrandOpening}
+	style={isGrandOpening
+		? 'background: linear-gradient(135deg, #fffaf1 0%, #eef7ef 52%, #dcefe4 100%);'
+		: 'background: linear-gradient(135deg, #FAFAF9 0%, #FFF1F3 50%, #FDE8EC 100%);'}
 >
 	{#if loading}
 		<div class="flex items-center justify-center min-h-[60vh]">
@@ -326,8 +334,13 @@
 		</div>
 	{:else if eventData && inviteData}
 		<!-- Invite Card -->
-		<div class="w-full max-w-lg mb-8 sm:mb-10">
+		<div
+			class="w-full mb-8 sm:mb-10"
+			class:max-w-lg={!isGrandOpening}
+			class:max-w-6xl={isGrandOpening}
+		>
 			<InviteCardPreview
+				rsvpContent={isGrandOpening ? responseContent : undefined}
 				templateId={inviteData.templateId}
 				heading={inviteData.heading}
 				body={inviteData.body}
@@ -336,13 +349,18 @@
 				secondaryColor={inviteData.secondaryColor}
 				font={inviteData.font}
 				eventTitle={eventData.title}
+				eventDescription={eventData.description}
 				eventDate={eventData.eventDate}
+				endDate={eventData.endDate}
 				eventLocation={eventData.location}
 				customData={typeof inviteData.customData === 'string' ? inviteData.customData : JSON.stringify(inviteData.customData || {})}
 				timezone={eventData.timezone}
+				recipientName={linkedRecipientName}
 			/>
 		</div>
 
+		{#snippet responseContent()}
+		{#if eventData}
 		<!-- Capacity Display -->
 		{#if showWaitlist}
 			<div class="w-full max-w-lg mb-6">
@@ -505,7 +523,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="w-full max-w-lg">
+			<div id={isGrandOpening ? undefined : 'rsvp-form'} class="w-full max-w-lg">
 				<div class="bg-surface rounded-xl shadow-lg border border-neutral-200 p-6 sm:p-8">
 					<h2 class="font-display text-xl font-bold text-neutral-900 mb-6 text-center">Your Response</h2>
 
@@ -751,6 +769,9 @@
 			</div>
 		{/if}
 
+		{/if}
+		{/snippet}
+		{#if !isGrandOpening}{@render responseContent()}{/if}
 		<!-- Guestbook -->
 		{#if eventData?.commentsEnabled}
 			<div class="w-full max-w-lg mt-8">

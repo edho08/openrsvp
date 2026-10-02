@@ -31,6 +31,30 @@
 	let primaryColor = $state('#4F46E5');
 	let secondaryColor = $state('#EC4899');
 	let font = $state('Inter');
+	const grandOpeningTemplateId = 'kasir-pintar-grand-opening';
+
+	// The branded template stores its replaceable content in InviteCard.customData.
+	// These fields keep the first wireframe editable without requiring final assets.
+	let grandOpeningRecipient = $state('Tamu Undangan');
+	let grandOpeningBrand = $state('Kasir Pintar');
+	let grandOpeningVenue = $state('Head Office');
+	let grandOpeningCity = $state('Surabaya');
+	let grandOpeningEyebrow = $state('Satu langkah baru untuk tumbuh bersama');
+	let grandOpeningSubtitle = $state('Head Office · Surabaya');
+	let grandOpeningStoryTitle = $state('Bertumbuh bersama, melayani lebih banyak usaha');
+	let grandOpeningStoryBody = $state('Dari satu ide sederhana untuk membantu pemilik usaha, Kasir Pintar terus bertumbuh bersama jutaan cerita bisnis di Indonesia.');
+	let grandOpeningValues = $state('Ruang untuk Berkolaborasi\nEnergi Baru untuk Berinovasi\nLingkungan yang Lebih Nyaman\nLangkah Lebih Jauh untuk UMKM');
+	let grandOpeningHeroImage = $state('');
+	let grandOpeningStoryImage = $state('');
+	let grandOpeningInteriorImage = $state('');
+	let grandOpeningMapImage = $state('');
+	let grandOpeningFooterImage = $state('');
+	let savedCustomData = $state<Record<string, unknown>>({});
+	let grandOpeningVideoUrl = $state('');
+	let grandOpeningMapsUrl = $state('');
+	let grandOpeningMapsLabel = $state('Head Office Kasir Pintar · Surabaya');
+	let grandOpeningInstagramUrl = $state('');
+	let grandOpeningLinkedInUrl = $state('');
 
 	// Background image
 	let backgroundImageUrl = $state('');
@@ -96,6 +120,12 @@
 			name: 'Chalkboard',
 			description: 'Dark and handwritten',
 			emoji: '\u{270D}'
+		},
+		{
+			id: grandOpeningTemplateId,
+			name: 'Kasir Pintar Grand Opening',
+			description: 'Full-page branded story and RSVP flow',
+			emoji: '\u{2728}'
 		}
 	];
 
@@ -107,11 +137,88 @@
 		{ value: 'Arial', label: 'Arial (Clean)' }
 	];
 
-	const customDataJSON = $derived(
-		backgroundImageUrl
-			? JSON.stringify({ backgroundImage: backgroundImageUrl })
-			: '{}'
-	);
+	const customDataJSON = $derived.by(() => {
+		const data: Record<string, unknown> = { ...savedCustomData };
+
+		if (selectedTemplate === grandOpeningTemplateId) {
+			const values = grandOpeningValues
+				.split('\n')
+				.map((value) => value.trim())
+				.filter(Boolean)
+				.slice(0, 4);
+			Object.assign(data, {
+				brandName: grandOpeningBrand,
+				recipientName: grandOpeningRecipient,
+				venueName: grandOpeningVenue,
+				cityName: grandOpeningCity,
+				eyebrow: grandOpeningEyebrow,
+				heroSubtitle: grandOpeningSubtitle,
+				storyTitle: grandOpeningStoryTitle,
+				storyBody: grandOpeningStoryBody,
+				values,
+				heroImage: grandOpeningHeroImage,
+				storyImage: grandOpeningStoryImage,
+				interiorImage: grandOpeningInteriorImage,
+				mapImage: grandOpeningMapImage,
+				footerImage: grandOpeningFooterImage,
+				videoUrl: grandOpeningVideoUrl,
+				mapsUrl: grandOpeningMapsUrl,
+				mapsLabel: grandOpeningMapsLabel,
+				instagramUrl: grandOpeningInstagramUrl,
+				linkedinUrl: grandOpeningLinkedInUrl
+			});
+		}
+
+		if (backgroundImageUrl) data.backgroundImage = backgroundImageUrl;
+		else delete data.backgroundImage;
+		return JSON.stringify(data);
+	});
+
+	function selectTemplate(templateId: string) {
+		selectedTemplate = templateId;
+		if (templateId !== grandOpeningTemplateId) return;
+
+		// Keep existing user copy when editing a saved design, but make the first
+		// selection feel like a usable branded wireframe instead of a blank card.
+		if (heading === "You're Invited!") heading = 'Grand Opening';
+		if (body === 'Join us for a wonderful celebration.') {
+			body = 'Dengan penuh rasa syukur, kami mengundang Anda untuk merayakan babak baru perjalanan Kasir Pintar.';
+		}
+		if (footer === 'We hope to see you there!') {
+			footer = 'Kehadiran Anda akan membuat momen ini semakin berarti.';
+		}
+		if (primaryColor === '#4F46E5') primaryColor = '#0CA678';
+		if (secondaryColor === '#EC4899') secondaryColor = '#087F5B';
+	}
+
+	function loadGrandOpeningConfig(customData: unknown) {
+		if (!customData || typeof customData !== 'object' || Array.isArray(customData)) return;
+		const data = customData as Record<string, unknown>;
+		const text = (key: string, fallback: string) =>
+			typeof data[key] === 'string' && (data[key] as string).trim() ? (data[key] as string) : fallback;
+
+		grandOpeningRecipient = text('recipientName', grandOpeningRecipient);
+		grandOpeningBrand = text('brandName', grandOpeningBrand);
+		grandOpeningVenue = text('venueName', grandOpeningVenue);
+		grandOpeningCity = text('cityName', grandOpeningCity);
+		grandOpeningEyebrow = text('eyebrow', grandOpeningEyebrow);
+		grandOpeningSubtitle = text('heroSubtitle', grandOpeningSubtitle);
+		grandOpeningStoryTitle = text('storyTitle', grandOpeningStoryTitle);
+		grandOpeningStoryBody = text('storyBody', grandOpeningStoryBody);
+		grandOpeningHeroImage = text('heroImage', grandOpeningHeroImage);
+		grandOpeningStoryImage = text('storyImage', grandOpeningStoryImage);
+		grandOpeningInteriorImage = text('interiorImage', grandOpeningInteriorImage);
+		grandOpeningMapImage = text('mapImage', grandOpeningMapImage);
+		grandOpeningFooterImage = text('footerImage', grandOpeningFooterImage);
+		grandOpeningVideoUrl = text('videoUrl', grandOpeningVideoUrl);
+		grandOpeningMapsUrl = text('mapsUrl', grandOpeningMapsUrl);
+		grandOpeningMapsLabel = text('mapsLabel', grandOpeningMapsLabel);
+		grandOpeningInstagramUrl = text('instagramUrl', grandOpeningInstagramUrl);
+		grandOpeningLinkedInUrl = text('linkedinUrl', grandOpeningLinkedInUrl);
+		if (Array.isArray(data.values)) {
+			grandOpeningValues = data.values.filter((value): value is string => typeof value === 'string').join('\n');
+		}
+	}
 
 	onMount(async () => {
 		try {
@@ -133,12 +240,14 @@
 
 				// Load existing background image from customData
 				try {
-					const cd = typeof invite.customData === 'string'
+					const cd = (typeof invite.customData === 'string'
 						? JSON.parse(invite.customData || '{}')
-						: invite.customData || {};
-					if (cd.backgroundImage) {
+						: invite.customData || {}) as Record<string, unknown>;
+					if (cd && typeof cd === 'object' && !Array.isArray(cd)) savedCustomData = cd;
+					if (typeof cd.backgroundImage === 'string' && cd.backgroundImage) {
 						backgroundImageUrl = cd.backgroundImage;
 					}
+					loadGrandOpeningConfig(cd);
 				} catch {
 					// ignore parse errors
 				}
@@ -273,7 +382,7 @@
 								class="relative rounded-lg border-2 p-3 text-center transition-all {selectedTemplate === template.id
 									? 'border-primary ring-2 ring-primary-light'
 									: 'border-neutral-200 hover:border-neutral-300'}"
-								onclick={() => (selectedTemplate = template.id)}
+								onclick={() => selectTemplate(template.id)}
 							>
 								<div class="text-2xl mb-1">{template.emoji}</div>
 								<p class="text-xs font-medium text-neutral-900">{template.name}</p>
@@ -373,6 +482,40 @@
 								</div>
 							{/if}
 						</div>
+
+						{#if selectedTemplate === grandOpeningTemplateId}
+							<div class="border-t border-neutral-200 pt-5 mt-5 space-y-4">
+								<div>
+									<h3 class="text-sm font-semibold text-neutral-900">Grand Opening wireframe content</h3>
+									<p class="mt-1 text-xs leading-5 text-neutral-500">
+										These fields are replaceable placeholders. Final photos, video, map, and copy can be added later without changing the template.
+									</p>
+								</div>
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<Input label="Recipient preview name" name="grandOpeningRecipient" bind:value={grandOpeningRecipient} placeholder="Tamu Undangan" />
+					<Input label="Brand label" name="grandOpeningBrand" bind:value={grandOpeningBrand} placeholder="Kasir Pintar" />
+					<Input label="Venue name" name="grandOpeningVenue" bind:value={grandOpeningVenue} placeholder="Head Office" />
+					<Input label="City" name="grandOpeningCity" bind:value={grandOpeningCity} placeholder="Surabaya" />
+				</div>
+								<Input label="Hero eyebrow" name="grandOpeningEyebrow" bind:value={grandOpeningEyebrow} placeholder="Satu langkah baru untuk tumbuh bersama" />
+								<Input label="Hero subtitle" name="grandOpeningSubtitle" bind:value={grandOpeningSubtitle} placeholder="Head Office · Surabaya" />
+								<Textarea label="Story title" name="grandOpeningStoryTitle" bind:value={grandOpeningStoryTitle} rows={2} />
+								<Textarea label="Story body" name="grandOpeningStoryBody" bind:value={grandOpeningStoryBody} rows={3} />
+								<Textarea label="Values (one per line, max 4)" name="grandOpeningValues" bind:value={grandOpeningValues} rows={4} />
+								<Input label="Hero image URL (optional)" name="grandOpeningHeroImage" bind:value={grandOpeningHeroImage} placeholder="https://..." />
+								<Input label="Story image URL (optional)" name="grandOpeningStoryImage" bind:value={grandOpeningStoryImage} placeholder="https://..." />
+								<Input label="Office interior image URL (optional)" name="grandOpeningInteriorImage" bind:value={grandOpeningInteriorImage} placeholder="https://..." />
+								<Input label="Map image URL (optional)" name="grandOpeningMapImage" bind:value={grandOpeningMapImage} placeholder="https://..." />
+								<Input label="Office exterior image URL (optional)" name="grandOpeningFooterImage" bind:value={grandOpeningFooterImage} placeholder="https://..." />
+								<Input label="Video URL (optional)" name="grandOpeningVideoUrl" bind:value={grandOpeningVideoUrl} placeholder="https://youtube.com/..." />
+								<Input label="Google Maps URL (optional)" name="grandOpeningMapsUrl" bind:value={grandOpeningMapsUrl} placeholder="https://maps.google.com/..." />
+								<Input label="Maps label" name="grandOpeningMapsLabel" bind:value={grandOpeningMapsLabel} placeholder="Head Office Kasir Pintar · Surabaya" />
+								<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+									<Input label="Instagram URL (optional)" name="grandOpeningInstagramUrl" bind:value={grandOpeningInstagramUrl} placeholder="https://instagram.com/..." />
+									<Input label="LinkedIn URL (optional)" name="grandOpeningLinkedInUrl" bind:value={grandOpeningLinkedInUrl} placeholder="https://linkedin.com/..." />
+								</div>
+							</div>
+						{/if}
 					</div>
 				</Card>
 
@@ -415,7 +558,9 @@
 						{secondaryColor}
 						{font}
 						eventTitle={event?.title || ''}
+						eventDescription={event?.description || ''}
 						eventDate={event?.eventDate || ''}
+						endDate={event?.endDate}
 						eventLocation={event?.location || ''}
 						customData={customDataJSON}
 						timezone={event?.timezone}

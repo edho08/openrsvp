@@ -111,7 +111,7 @@ func TestHandleListTemplates_Success(t *testing.T) {
 	body := testutil.ParseJSON(t, rr)
 	data, ok := body["data"].([]any)
 	require.True(t, ok)
-	assert.Len(t, data, 10)
+	assert.Len(t, data, 11)
 }
 
 // --- Get By Event ---
@@ -360,7 +360,7 @@ func TestHandleUploadImage_ReplacesOldImage(t *testing.T) {
 
 func TestHandleSaveInvite_NewTemplates(t *testing.T) {
 	h, _, _, eventID := setupInviteHandler(t)
-	newTemplates := []string{"elegant-affair", "clean-minimal", "tropical-vibes", "vintage-retro", "chalkboard"}
+	newTemplates := []string{"elegant-affair", "clean-minimal", "tropical-vibes", "vintage-retro", "chalkboard", "kasir-pintar-grand-opening"}
 	for _, tmpl := range newTemplates {
 		rr := testutil.DoRequest(t, h, "PUT", "/event/"+eventID, map[string]string{
 			"templateId": tmpl,
