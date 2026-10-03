@@ -37,12 +37,17 @@
 	// These fields keep the first wireframe editable without requiring final assets.
 	let grandOpeningRecipient = $state('Tamu Undangan');
 	let grandOpeningBrand = $state('Kasir Pintar');
-	let grandOpeningVenue = $state('Head Office');
+	let grandOpeningVenue = $state('Head Office Kasir Pintar');
 	let grandOpeningCity = $state('Surabaya');
-	let grandOpeningEyebrow = $state('Satu langkah baru untuk tumbuh bersama');
-	let grandOpeningSubtitle = $state('Head Office · Surabaya');
-	let grandOpeningStoryTitle = $state('Bertumbuh bersama, melayani lebih banyak usaha');
-	let grandOpeningStoryBody = $state('Dari satu ide sederhana untuk membantu pemilik usaha, Kasir Pintar terus bertumbuh bersama jutaan cerita bisnis di Indonesia.');
+	let grandOpeningEyebrow = $state('');
+	let grandOpeningSubtitle = $state('NEW OFFICE');
+	let grandOpeningStoryTitle = $state('Perjalanan Kasir Pintar Bersama UMKM Indonesia');
+	let grandOpeningStoryBody = $state('');
+	let grandOpeningRecipientRole = $state('');
+	let grandOpeningVideoCaption = $state('Terus berusaha tumbuh bersama UMKM Indonesia');
+	let grandOpeningWorkspaceImage = $state('');
+	let grandOpeningYoutubeUrl = $state('');
+	let grandOpeningTiktokUrl = $state('');
 	let grandOpeningValues = $state('Ruang untuk Berkolaborasi\nEnergi Baru untuk Berinovasi\nLingkungan yang Lebih Nyaman\nLangkah Lebih Jauh untuk UMKM');
 	let grandOpeningHeroImage = $state('');
 	let grandOpeningStoryImage = $state('');
@@ -52,7 +57,7 @@
 	let savedCustomData = $state<Record<string, unknown>>({});
 	let grandOpeningVideoUrl = $state('');
 	let grandOpeningMapsUrl = $state('');
-	let grandOpeningMapsLabel = $state('Head Office Kasir Pintar · Surabaya');
+	let grandOpeningMapsLabel = $state('Manyar Kartika III No 12, Menur Pumpungan, Kec. Sukolilo, Kota Surabaya');
 	let grandOpeningInstagramUrl = $state('');
 	let grandOpeningLinkedInUrl = $state('');
 
@@ -149,6 +154,11 @@
 			Object.assign(data, {
 				brandName: grandOpeningBrand,
 				recipientName: grandOpeningRecipient,
+				recipientRole: grandOpeningRecipientRole,
+				videoCaption: grandOpeningVideoCaption,
+				workspaceImage: grandOpeningWorkspaceImage,
+				youtubeUrl: grandOpeningYoutubeUrl,
+				tiktokUrl: grandOpeningTiktokUrl,
 				venueName: grandOpeningVenue,
 				cityName: grandOpeningCity,
 				eyebrow: grandOpeningEyebrow,
@@ -182,13 +192,13 @@
 		// selection feel like a usable branded wireframe instead of a blank card.
 		if (heading === "You're Invited!") heading = 'Grand Opening';
 		if (body === 'Join us for a wonderful celebration.') {
-			body = 'Dengan penuh rasa syukur, kami mengundang Anda untuk merayakan babak baru perjalanan Kasir Pintar.';
+			body = 'kami mengundang Bapak/Ibu untuk hadir dalam momen spesial peresmian kantor baru Kasir Pintar.';
 		}
 		if (footer === 'We hope to see you there!') {
-			footer = 'Kehadiran Anda akan membuat momen ini semakin berarti.';
+			footer = 'Terimakasih telah menjadi bagian dari perjalanan kami';
 		}
-		if (primaryColor === '#4F46E5') primaryColor = '#0CA678';
-		if (secondaryColor === '#EC4899') secondaryColor = '#087F5B';
+		if (primaryColor === '#4F46E5') primaryColor = '#10A37B';
+		if (secondaryColor === '#EC4899') secondaryColor = '#10A37B';
 	}
 
 	function loadGrandOpeningConfig(customData: unknown) {
@@ -198,6 +208,11 @@
 			typeof data[key] === 'string' && (data[key] as string).trim() ? (data[key] as string) : fallback;
 
 		grandOpeningRecipient = text('recipientName', grandOpeningRecipient);
+		grandOpeningRecipientRole = text('recipientRole', grandOpeningRecipientRole);
+		grandOpeningVideoCaption = text('videoCaption', grandOpeningVideoCaption);
+		grandOpeningWorkspaceImage = text('workspaceImage', grandOpeningWorkspaceImage);
+		grandOpeningYoutubeUrl = text('youtubeUrl', grandOpeningYoutubeUrl);
+		grandOpeningTiktokUrl = text('tiktokUrl', grandOpeningTiktokUrl);
 		grandOpeningBrand = text('brandName', grandOpeningBrand);
 		grandOpeningVenue = text('venueName', grandOpeningVenue);
 		grandOpeningCity = text('cityName', grandOpeningCity);
@@ -505,6 +520,11 @@
 								<Input label="Hero image URL (optional)" name="grandOpeningHeroImage" bind:value={grandOpeningHeroImage} placeholder="https://..." />
 								<Input label="Story image URL (optional)" name="grandOpeningStoryImage" bind:value={grandOpeningStoryImage} placeholder="https://..." />
 								<Input label="Office interior image URL (optional)" name="grandOpeningInteriorImage" bind:value={grandOpeningInteriorImage} placeholder="https://..." />
+								<Input label="Recipient role (optional)" name="grandOpeningRecipientRole" bind:value={grandOpeningRecipientRole} />
+								<Input label="Workspace image URL (optional)" name="grandOpeningWorkspaceImage" bind:value={grandOpeningWorkspaceImage} placeholder="https://..." />
+								<Input label="Video caption" name="grandOpeningVideoCaption" bind:value={grandOpeningVideoCaption} />
+								<Input label="YouTube URL (optional)" name="grandOpeningYoutubeUrl" bind:value={grandOpeningYoutubeUrl} placeholder="https://..." />
+								<Input label="TikTok URL (optional)" name="grandOpeningTiktokUrl" bind:value={grandOpeningTiktokUrl} placeholder="https://..." />
 								<Input label="Map image URL (optional)" name="grandOpeningMapImage" bind:value={grandOpeningMapImage} placeholder="https://..." />
 								<Input label="Office exterior image URL (optional)" name="grandOpeningFooterImage" bind:value={grandOpeningFooterImage} placeholder="https://..." />
 								<Input label="Video URL (optional)" name="grandOpeningVideoUrl" bind:value={grandOpeningVideoUrl} placeholder="https://youtube.com/..." />

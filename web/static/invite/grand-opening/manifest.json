@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "referenceWidth": 1080,
+  "assets": {
+    "envelope-top": {
+      "source": "Sec 1/Kertas Atas.png",
+      "crop": null,
+      "width": 1080,
+      "height": 1188,
+      "url": "/invite/grand-opening/envelope-top.webp",
+      "bytes": 256074,
+      "sourceSha256": "799cbd34272296272f6978ec5aedced7a2d196404a2b9d0ac3e94af9fb3b50e3",
+      "sha256": "a901c705bf7b019bf6a9f02ed7fe0ea14e1d8ac7d270b448366520a588da5276"
+    },
+    "envelope-bottom": {
+      "source": "Sec 1/Kertas Bawah.png",
+      "crop": null,
+      "width": 1080,
+      "height": 1920,
+      "url": "/invite/grand-opening/envelope-bottom.webp",
+      "bytes": 403816,
+      "sourceSha256": "ec9d2e72847afe8b8731048d1c3b050520710789924b08fa6504cf17be556e23",
+      "sha256": "821458641e2e07266df9dffed53cbe72b9dd1c84536ba32266851c6b19ad14bb"
+    },
+    "cover-title": {
+      "source": "Sec 1/Judul.png",
+      "crop": null,
+      "width": 698,
+      "height": 402,
+      "url": "/invite/grand-opening/cover-title.webp",
+      "bytes": 94980,
+      "sourceSha256": "e25d1c9f81ff535ed62220aeaea7accd2ff493ce9d72b5937e2b376b578fdd1e",
+      "sha256": "6aeaefcae7bcc79be25920fe6a6d53602d45799d226afddf6ddf53e26ec2b0ac"
+    },
+    "cover-tagline": {
+      "source": "Sec 1/Tagline.png",
+      "crop": null,
+      "width": 913,
+      "height": 113,
+      "url": "/invite/grand-opening/cover-tagline.webp",
+      "bytes": 13232,
+      "sourceSha256": "a07174469785aa7f481269063c52ff95385cddef42d96256743143bed257aef0",
+      "sha256": "ee5d46dc2293cd55b8ce4ec8f17bf22eb263da6a25db015c1ecf4f6e39908849"
+    },
+    "seal": {
+      "source": "Sec 1/Stamp.png",
+      "crop": null,
+      "width": 409,
+      "height": 414,
+      "url": "/invite/grand-opening/seal.webp",
+      "bytes": 200670,
+      "sourceSha256": "957658de93627a9180edcc5f54b4285ad1c5cddc383e3506afcda1f1756ac9d3",
+      "sha256": "66e5314d0b529d709f69b51536bfa0ddac1a43e5ceb277b91249f51b0890eaa1"
+    },
+    "scroll": {
+      "source": "Sec 1/scroll.png",
+      "crop": null,
+      "width": 91,
+      "height": 160,
+      "url": "/invite/grand-opening/scroll.webp",
+      "bytes": 7826,
+      "sourceSha256": "cb3afdd74d2aba0cf3fa59b22c15ec61a0d84f5fcbacbe40d93ed9c4c41669c7",
+      "sha256": "f16e2b74faa6c59e6c544d2616fc2929925c3b17c2b69cd948f40078905c9267"
+    },
+    "office-front": {
+      "source": "Sec 2/Foto sec 2.png",
+      "crop": null,
+      "width": 1080,
+      "height": 732,
+      "url": "/invite/grand-opening/office-front.webp",
+      "bytes": 278392,
+      "sourceSha256": "bcfb7f70571c2ff85924c89f1a962c667f9dde532bb51654f28e461eb5786c7b",
+      "sha256": "bbf3b5686ebefb86eaee448a61aa993d973d9e87b4d2904316cb054ce792f1a9"
+    },
+    "invitation-title": {
+      "source": "Sec 2/Artboard 2 copy.png",
+      "crop": [
+        185,
+        95,
+        900,
+        275
+      ],
+      "width": 715,
+      "height": 180,
+      "url": "/invite/grand-opening/invitation-title.webp",
+      "bytes": 6938,
+      "sourceSha256": "0b9860559a8b718114935123906066e07ad6bfbe4cfc40b10452d82f121f4c93",
+      "sha256": "f21e4069599757123135c9f0e519e4b01784d201b4e66332e4da5f8ec76d4dbd"
+    },
+    "journey-panel": {
+      "source": "Sec 3/Shape Hijau sec 3.png",
+      "crop": null,
+      "width": 913,
+      "height": 838,
+      "url": "/invite/grand-opening/journey-panel.webp",
+      "bytes": 7484,
+      "sourceSha256": "22531991e4ff3f3cc88ca71ba26df5ee67fcfad99b8d316919315c0478a24324",
+      "sha256": "c1d894f28d0828844422f5dd2be1e6af77fff49e8658d4e5c619af7aa1e097c0"
+    },
+    "journey-poster": {
+      "source": "Sec 3/Artboard 3 copy.png",
+      "crop": [
+        120,
+        489,
+        961,
+        950
+      ],
+      "width": 841,
+      "height": 461,
+      "url": "/invite/grand-opening/journey-poster.webp",
+      "bytes": 53380,
+      "sourceSha256": "3aba1b688d68a935284b9aa882c5b23178a32a9b95068055c10e13e66092c488",
+      "sha256": "06c8d747bfe97ebf2d0bd86ba919e4f83c337c58a13095784d37eb3c58f9b0a2"
+    },
+    "office-meeting": {
+      "source": "Sec 4/Foto sec 4.png",
+      "crop": null,
+      "width": 1080,
+      "height": 822,
+      "url": "/invite/grand-opening/office-meeting.webp",
+      "bytes": 173956,
+      "sourceSha256": "70ac4ab76722986b9c954b60a2194e87c07135f665dbcbbd66f095e667e49a5c",
+      "sha256": "bbc4c00d0d72bd5e65601f27eeaf31845d10adef1c32a1f9c5958285201a36b7"
+    },
+    "value-collaboration": {
+      "source": "Sec 4/Ruang untuk Berkolaborasi.png",
+      "crop": null,
+      "width": 201,
+      "height": 201,
+      "url": "/invite/grand-opening/value-collaboration.webp",
+      "bytes": 25212,
+      "sourceSha256": "49d1860247460dd25cbaed80f824512945ab3cad7a0ed149c5540d6166a20566",
+      "sha256": "b448c77665b095c194fa3f01dcd4e4257287773f76a941bdf72cdeadd9dbdc88"
+    },
+    "value-innovation": {
+      "source": "Sec 4/Energi Baru untuk Berinovasi_.png",
+      "crop": null,
+      "width": 201,
+      "height": 201,
+      "url": "/invite/grand-opening/value-innovation.webp",
+      "bytes": 24808,
+      "sourceSha256": "e4257f89a9021fc3b7bcc310892d6c4d2c014aa844738ae65c56a5ab3c068c17",
+      "sha256": "24739abc831814d5cccc43a6df1bd86fa48d1829888b15f9e2b61f1c276e3256"
+    },
+    "value-comfort": {
+      "source": "Sec 4/Lingkungan yang Lebih Nyaman.png",
+      "crop": null,
+      "width": 201,
+      "height": 201,
+      "url": "/invite/grand-opening/value-comfort.webp",
+      "bytes": 28674,
+      "sourceSha256": "acae10d9ba437607726d73638ecb0878df10ce927f7fde07d621c6552a4a95bc",
+      "sha256": "54f69273a7313b50b8b7eb08834e4fbb29e7d182e2453db6faf236fb97f39676"
+    },
+    "value-growth": {
+      "source": "Sec 4/Langkah Lebih Jauh untuk UMKM_.png",
+      "crop": null,
+      "width": 201,
+      "height": 201,
+      "url": "/invite/grand-opening/value-growth.webp",
+      "bytes": 23868,
+      "sourceSha256": "c897ecb3e458515e3a15ea4ef7351370a5225a384e9bb0f4ed9577e460c6b767",
+      "sha256": "8933efbb8b3e785cfd356bc0af05182ddd6cbdc992249ebbac46b7b0a82770a1"
+    },
+    "office-workspace": {
+      "source": "Sec 5/Foto sec 5.png",
+      "crop": null,
+      "width": 1080,
+      "height": 1043,
+      "url": "/invite/grand-opening/office-workspace.webp",
+      "bytes": 199104,
+      "sourceSha256": "adc5f9176e00174b85d4b1e64f2104811a1aaa336eeae0da40cc44aa70382834",
+      "sha256": "a762647a27410c5687a4632cc954d59d71a6fde97b476135169b341522be8a85"
+    },
+    "detail-calendar": {
+      "source": "Sec 5/Layer 10.png",
+      "crop": null,
+      "width": 142,
+      "height": 142,
+      "url": "/invite/grand-opening/detail-calendar.webp",
+      "bytes": 4536,
+      "sourceSha256": "8da2b07d773232cc7bb76b0267a17bf6c290f3f1505d1cf7a540d7934f00e2e9",
+      "sha256": "d5fdb2c1183473727908c8d022da5e50d904d72c07c8c0e0f6942b923850575e"
+    },
+    "detail-clock": {
+      "source": "Sec 5/Layer 9.png",
+      "crop": null,
+      "width": 142,
+      "height": 142,
+      "url": "/invite/grand-opening/detail-clock.webp",
+      "bytes": 4432,
+      "sourceSha256": "aeb33828054b894f08b44ebe1469398606476f98575650cafbecd65a9f8ec9f4",
+      "sha256": "f04e9d9b541271c33ad0792bb51945f3a1a04ad9e56057e76327b5c8c9486fb0"
+    },
+    "detail-location": {
+      "source": "Sec 5/Layer 11.png",
+      "crop": null,
+      "width": 142,
+      "height": 142,
+      "url": "/invite/grand-opening/detail-location.webp",
+      "bytes": 3692,
+      "sourceSha256": "23d18ca37ba96561501c46a71a7ce3a99191f46bf29adbac26ec6f5f154c7321",
+      "sha256": "ba9a9114df10abdd52059be7596efe0cfe89bcdd73cd266559956945c926a46f"
+    },
+    "maps-frame": {
+      "source": "Sec 5/Shape Maps sec 5.png",
+      "crop": null,
+      "width": 802,
+      "height": 415,
+      "url": "/invite/grand-opening/maps-frame.webp",
+      "bytes": 1618,
+      "sourceSha256": "22c93c7de6aef5104de01e0808c564742797c96231df5ae6bc431e6f27c93f90",
+      "sha256": "823bf020fb518ca837c1cdc0c9566485974d48c28c53f698d48210f1d3cd96e7"
+    },
+    "maps-button": {
+      "source": "Sec 5/Shape button hitau sec 5.png",
+      "crop": null,
+      "width": 453,
+      "height": 88,
+      "url": "/invite/grand-opening/maps-button.webp",
+      "bytes": 4200,
+      "sourceSha256": "0360b3c566a1a00eb8c00d48777a540e7cbfe880b7a12a7acc221aadc7671da4",
+      "sha256": "b7b30b3a36dbab558bd2717fd2fb9a70fb2ea7150b1705e33c55f8949332c4c0"
+    },
+    "maps-preview": {
+      "source": "Sec 5/Artboard 5 copy.png",
+      "crop": [
+        162,
+        751,
+        916,
+        1080
+      ],
+      "width": 754,
+      "height": 329,
+      "url": "/invite/grand-opening/maps-preview.webp",
+      "bytes": 59744,
+      "sourceSha256": "ffceca556a53f525ed32eb44fd23683a7be07a72dc78b72e776d293ce8647a3a",
+      "sha256": "998b546cd51ff4e4f2b289030861bbba6ffdc2df771012d9ba769dae61aa309e"
+    },
+    "rsvp-panel": {
+      "source": "Sec 6/Shape sec 6.png",
+      "crop": null,
+      "width": 905,
+      "height": 915,
+      "url": "/invite/grand-opening/rsvp-panel.webp",
+      "bytes": 9012,
+      "sourceSha256": "858ec90b961388e519cf2a6fbd8cd249f0cd4058788ad0502468311934677778",
+      "sha256": "eb63f952a42080c06fc0580aaaf086e9f17252bc198b958381cd5886d1f180c2"
+    },
+    "office-closing": {
+      "source": "Sec 7/Foto sec 7.png",
+      "crop": null,
+      "width": 1080,
+      "height": 687,
+      "url": "/invite/grand-opening/office-closing.webp",
+      "bytes": 221776,
+      "sourceSha256": "9cf222e669d4e3f42f1a70df9761eb87c8ffa0cb6b9894ee1c08e5e98b67330b",
+      "sha256": "336c083eb876e98e423d642b803f5ac8577cae969cb88648fd082d0d20ac2044"
+    },
+    "closing-title": {
+      "source": "Sec 7/See you Sec 7.png",
+      "crop": null,
+      "width": 577,
+      "height": 206,
+      "url": "/invite/grand-opening/closing-title.webp",
+      "bytes": 7560,
+      "sourceSha256": "7f872cacd529fbfc6bc854af0222d1e73af0b2bfa7f31c13a6268d3be59685bf",
+      "sha256": "60715d9fb77604e9733deb476acb8929dcf04eef08e7769d4b65a9a202beac7a"
+    },
+    "brand-logo": {
+      "source": "Sec 7/Artboard 7 copy.png",
+      "crop": [
+        355,
+        85,
+        725,
+        175
+      ],
+      "width": 370,
+      "height": 90,
+      "url": "/invite/grand-opening/brand-logo.webp",
+      "bytes": 4880,
+      "sourceSha256": "c7090e0a60a676628bd38ca2934db57b3de0234731f021bb06a95f46b13e09e1",
+      "sha256": "450febdef7414bee7e49057ff91de14cc4765d2766a940846148f60dcebdbbc5"
+    },
+    "social-instagram": {
+      "source": "Sec 7/Layer 17.png",
+      "crop": null,
+      "width": 105,
+      "height": 105,
+      "url": "/invite/grand-opening/social-instagram.webp",
+      "bytes": 10926,
+      "sourceSha256": "3ce4fb0a4fb642c06f71dafa930851d773550cd6cecc6548ea53be6c317bee45",
+      "sha256": "d3ea13ff9c29c3e604e3f4b82311329c15f678d47ab65cc9249c1a2ec49f67c9"
+    },
+    "social-youtube": {
+      "source": "Sec 7/Layer 18.png",
+      "crop": null,
+      "width": 105,
+      "height": 105,
+      "url": "/invite/grand-opening/social-youtube.webp",
+      "bytes": 8028,
+      "sourceSha256": "f24ccbb92eb5061599d5975445fa119baf862095fc420695bc3cdb76e00a82f3",
+      "sha256": "8dbc1f773cb40a24c17ca86cbcfb88ed10d37d2184f21aaaaa70dc0651d0e2a1"
+    },
+    "social-tiktok": {
+      "source": "Sec 7/Layer 19.png",
+      "crop": null,
+      "width": 105,
+      "height": 105,
+      "url": "/invite/grand-opening/social-tiktok.webp",
+      "bytes": 8928,
+      "sourceSha256": "28c0249aa1d5d1ae200c55476568edf1e60b60b04e32c678a69e00ec582f6fa1",
+      "sha256": "d901c68049ab8f263ff987cd76c74c2123066543027d9d5656cd090c51f8fd64"
+    }
+  }
+}

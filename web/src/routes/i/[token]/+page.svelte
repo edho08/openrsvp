@@ -525,7 +525,7 @@
 		{:else}
 			<div id={isGrandOpening ? undefined : 'rsvp-form'} class="w-full max-w-lg">
 				<div class="bg-surface rounded-xl shadow-lg border border-neutral-200 p-6 sm:p-8">
-					<h2 class="font-display text-xl font-bold text-neutral-900 mb-6 text-center">Your Response</h2>
+					<h2 class="font-display text-xl font-bold text-neutral-900 mb-6 text-center" class:go-public-form-heading={isGrandOpening}>Your Response</h2>
 
 					<form onsubmit={handleSubmit} class="space-y-5">
 						<!-- Honeypot -->
@@ -542,7 +542,7 @@
 						<!-- Name -->
 						<div>
 							<label for="rsvp-name" class="block text-sm font-medium text-neutral-700 mb-1.5">
-								Your Name <span class="text-error">*</span>
+								{isGrandOpening ? 'Nama Lengkap' : 'Your Name'} <span class="text-error">*</span>
 							</label>
 							<input
 								id="rsvp-name"
@@ -554,6 +554,10 @@
 							/>
 						</div>
 
+						{#if isGrandOpening && eventQuestions.length > 0}
+							<QuestionRenderer questions={eventQuestions} bind:answers />
+						{/if}
+						{#if !isGrandOpening || emailRequired}
 						<!-- Email -->
 						<div>
 							<label for="rsvp-email" class="block text-sm font-medium text-neutral-700 mb-1.5">
@@ -574,6 +578,8 @@
 							/>
 						</div>
 
+						{/if}
+						{#if !isGrandOpening || phoneRequired}
 						<!-- Phone -->
 						<div>
 							<label for="rsvp-phone" class="block text-sm font-medium text-neutral-700 mb-1.5">
@@ -598,12 +604,13 @@
 							</p>
 						</div>
 
+						{/if}
 						<!-- RSVP Status -->
 						<fieldset>
 							<legend class="block text-sm font-medium text-neutral-700 mb-3">
-								Will you attend?
+								{isGrandOpening ? 'Konfirmasi Kehadiran *' : 'Will you attend?'}
 							</legend>
-							<div class="grid grid-cols-3 gap-3">
+							<div class="grid grid-cols-3 gap-3" class:go-attendance-options={isGrandOpening}>
 								<label
 									class="rsvp-option {attendingDisabled ? 'rsvp-option-disabled' : ''}"
 									class:rsvp-option-selected={rsvpStatus === 'attending'}
@@ -613,7 +620,7 @@
 									<svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 										<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 									</svg>
-									<span class="text-xs sm:text-sm font-medium">I'll be there!</span>
+									<span class="text-xs sm:text-sm font-medium">{isGrandOpening ? 'Ya, Saya Akan hadir' : "I'll be there!"}</span>
 									{#if attendingDisabled}
 										<span class="text-[10px] text-error mt-0.5">Full</span>
 									{/if}
@@ -630,12 +637,12 @@
 									<svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 										<path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
 									</svg>
-									<span class="text-xs sm:text-sm font-medium">Can't make it</span>
+									<span class="text-xs sm:text-sm font-medium">{isGrandOpening ? 'Maaf, Saya Tidak Bisa Hadir' : "Can't make it"}</span>
 								</label>
 							</div>
 						</fieldset>
 
-						{#if rsvpStatus !== 'declined'}
+						{#if rsvpStatus !== 'declined' && !isGrandOpening}
 							<!-- Dietary Notes -->
 							<div>
 								<label for="rsvp-dietary" class="block text-sm font-medium text-neutral-700 mb-1.5">
@@ -670,7 +677,7 @@
 						{/if}
 
 						<!-- Custom Questions -->
-						{#if eventQuestions.length > 0}
+						{#if !isGrandOpening && eventQuestions.length > 0}
 							<QuestionRenderer questions={eventQuestions} bind:answers />
 						{/if}
 
@@ -696,7 +703,7 @@
 									Sending...
 								</span>
 							{:else}
-								{showWaitlist ? 'Join Waitlist' : 'Send RSVP'}
+								{showWaitlist ? 'Join Waitlist' : isGrandOpening ? 'KIRIM RSVP' : 'Send RSVP'}
 							{/if}
 						</button>
 					</form>

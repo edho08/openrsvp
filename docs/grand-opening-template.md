@@ -4,8 +4,10 @@ Template ID: `kasir-pintar-grand-opening` (Plane `INTERNAL-90`).
 
 The template recreates the reference's vertical emerald cover, invitation,
 journey/video, office values, event details/Maps, RSVP and closing footer as
-responsive Svelte components. Images and copy are placeholders until final assets
-are supplied; the PDF is not used as a page background.
+responsive Svelte components. Original section assets are now bundled; neither
+the PDF nor whole artboards are used as page backgrounds. See
+[`assets/grand-opening/README.md`](../assets/grand-opening/README.md) for Git LFS,
+source provenance, regeneration, and remaining fidelity limits.
 
 ## Content contract
 
@@ -15,7 +17,7 @@ come from the event. Optional content lives in the existing `InviteCard.customDa
 JSON, avoiding a new schema or RSVP backend.
 
 - `brandName`, `logoLabel`, `venueName`, `cityName`: branding and venue labels.
-- `recipientName`, `recipientPrefix`: preview/default invitee. Public `?to=...`
+- `recipientName`, `recipientPrefix`, `recipientRole`: preview/default invitee. Public `?to=...`
   overrides the name; `/r/{token}` uses the existing attendee name. `?to` is display
   personalization, not authentication or a guest access restriction.
 - `heroTitle`, `heroSubtitle`, `eyebrow`, `intro`: cover and invitation copy.
@@ -23,8 +25,8 @@ JSON, avoiding a new schema or RSVP backend.
 - `chapterTitle`, `chapterBody`, `values`: office section; up to four value labels.
 - `closingBody`, `sinceLabel`: closing copy and journey label.
 - `heroImage` (also building fallback), `buildingImage`, `storyImage` (video
-  thumbnail fallback), `videoThumbnail`, `interiorImage`, `mapImage`, `footerImage`:
-  optional image URLs. Failed or empty images render CSS placeholders.
+  thumbnail fallback), `videoThumbnail`, `interiorImage`, `workspaceImage`, `mapImage`, `footerImage`:
+  optional image URLs. Failed or empty images use the supplied original assets.
 - `videoUrl`, `mapsUrl`, `mapsLabel`: outbound video and map links. If Maps is
   empty, a Google Maps search uses the event location.
 - `instagramUrl`, `linkedinUrl`, `youtubeUrl`, `tiktokUrl`: optional social links.
@@ -33,8 +35,8 @@ The designer exposes core copy, images, video, Maps and social fields; advanced
 keys can be set through the existing invitation API and are preserved on save.
 URLs permit HTTP(S) or same-origin absolute paths; unsafe URLs are omitted.
 Video opens an external page rather than embedding third-party scripts.
-Great Vibes is bundled under SIL OFL so script lettering does not depend on OS
-fonts or a third-party font request.
+Great Vibes is bundled under SIL OFL for personalized names. Original lettering
+uses supplied transparent assets; the reference's script font was not supplied.
 
 ## RSVP compatibility
 

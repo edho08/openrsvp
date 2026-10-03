@@ -19,6 +19,7 @@ const invite = {
 };
 const attendee = { id: 'guest', name: 'Existing Guest', email: 'guest@example.com',
 	rsvpStatus: 'attending', rsvpToken: 'manage', plusOnes: 0, dietaryNotes: '' };
+const questions = [{ id: 'organization', type: 'text', label: 'Instansi / Perusahaan', required: false, options: [], sortOrder: 0 }];
 
 test.beforeEach(async ({ page }) => {
 	await page.route('**/api/v1/config', route => route.fulfill({ json: { data: { smsEnabled: false } } }));
@@ -29,8 +30,9 @@ test.beforeEach(async ({ page }) => {
 			const payload = route.request().postDataJSON();
 			expect(payload.name).toBe('New Guest');
 			expect(payload.rsvpStatus).toBe('attending');
+			expect(payload.answers.organization).toBe('Kasir Pintar');
 			await route.fulfill({ json: { data: { rsvpToken: 'manage' } } });
-		} else await route.fulfill({ json: { data: { event, invite, questions: [] } } });
+		} else await route.fulfill({ json: { data: { event, invite, questions } } });
 	});
 	await page.route('**/api/v1/rsvp/public/token/manage', async route => {
 		if (route.request().method() === 'PATCH') {
@@ -58,11 +60,38 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 		return !!form && !!footer && !!(form.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING);
 	})).toBe(true);
 	await page.locator('#rsvp-name').fill('New Guest');
+	await page.getByLabel('Instansi / Perusahaan').fill('Kasir Pintar');
 	await page.locator('#rsvp-email').fill('new@example.com');
-	await page.getByRole('button', { name: 'Send RSVP', exact: true }).click();
+	await page.getByRole('button', { name: 'KIRIM RSVP', exact: true }).click();
 	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Modify Your RSVP' })).toHaveAttribute('href', '/r/manage');
 	expect(errors).toEqual([]);
+});
+
+test('original assets and seven-section reference geometry', async ({ page }, testInfo) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, questions, invite: { ...invite, font: 'Inter', primaryColor: '#10A37B', secondaryColor: '#10A37B',
+			body: 'kami mengundang Bapak/Ibu untuk hadir dalam momen spesial peresmian kantor baru Kasir Pintar.',
+			footer: 'Terimakasih telah menjadi bagian dari perjalanan kami', customData: '{}' }
+	} } }));
+	await page.goto('/i/test?to=Edward%20Sumanto');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Edward Sumanto', { timeout: 15000 });
+	await page.evaluate(() => document.fonts.ready);
+	const sections = ['go-cover', 'go-invitation', 'go-journey', 'go-chapter', 'go-details', 'go-rsvp-section', 'go-footer'];
+	const heights = [1920, 1614, 1334, 1892, 1892, 1400, 1718];
+	for (let i = 0; i < sections.length; i++) {
+		const section = page.locator(`.${sections[i]}`);
+		await section.scrollIntoViewIfNeeded();
+		await expect.poll(() => section.evaluate(el => [...el.querySelectorAll('img')].every(image => image.complete && image.naturalWidth > 0))).toBe(true);
+		const box = await section.boundingBox();
+		expect(box).not.toBeNull();
+		// Live RSVP retains required contact and status fields, so it must grow.
+		if (i !== 5) expect(Math.abs(box!.height / box!.width - heights[i] / 1080)).toBeLessThan(0.09);
+		await section.screenshot({ path: testInfo.outputPath(`${sections[i]}.png`), animations: 'disabled' });
+	}
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+	await expect(page.locator('.go-cover-seal')).toHaveAttribute('src', '/invite/grand-opening/seal.webp');
+	await expect(page.locator('.go-detail-row img').first()).toHaveAttribute('src', '/invite/grand-opening/detail-calendar.webp');
 });
 
 test('manage link personalizes and updates existing response', async ({ page }) => {
