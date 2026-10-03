@@ -54,13 +54,13 @@
 	const title = $derived(text(data.heroTitle, heading === "You're Invited!" ? 'Grand Opening' : heading || 'Grand Opening'));
 	const recipient = $derived(text(recipientName, text(data.recipientName, 'Tamu Undangan')));
 	const recipientPrefix = $derived(text(data.recipientPrefix, 'To :'));
-	const recipientRole = $derived(text(data.recipientRole, ''));
-	const intro = $derived(text(data.intro, body && body !== 'Join us for a wonderful celebration.' ? body : 'kami mengundang Bapak/Ibu untuk hadir dalam momen spesial peresmian kantor baru Kasir Pintar.'));
-	const storyTitle = $derived(text(data.storyTitle, 'Perjalanan Kasir Pintar Bersama UMKM Indonesia'));
+	const recipientRole = $derived(text(data.recipientRole, text(data.hostRole, '')));
+	const intro = $derived(text(data.intro, body && body !== 'Join us for a wonderful celebration.' && body !== 'Dengan penuh rasa syukur, kami mengundang Anda untuk merayakan babak baru perjalanan Kasir Pintar.' ? body : 'kami mengundang Bapak/Ibu untuk hadir dalam momen spesial peresmian kantor baru Kasir Pintar.'));
+	const storyTitle = $derived(text(data.storyTitle === 'Bertumbuh bersama, melayani lebih banyak usaha' ? '' : data.storyTitle, 'Perjalanan Kasir Pintar Bersama UMKM Indonesia'));
 	const videoCaption = $derived(text(data.videoCaption, 'Terus berusaha tumbuh bersama UMKM Indonesia'));
 	const chapterTitle = $derived(text(data.chapterTitle, 'A New Chapter Begins'));
 	const chapterBody = $derived(text(data.chapterBody, 'Kantor baru ini menjadi ruang untuk terus berkolaborasi & menghadirkan energi baru untuk berinovasi dalam melanjutkan perjalanan Kasir Pintar'));
-	const closingBody = $derived(text(data.closingBody, footer || 'Terimakasih telah menjadi bagian dari perjalanan kami'));
+	const closingBody = $derived(text(data.closingBody, footer === 'Kehadiran Anda akan membuat momen ini semakin berarti.' ? 'Terimakasih telah menjadi bagian dari perjalanan kami' : footer || 'Terimakasih telah menjadi bagian dari perjalanan kami'));
 	const venueName = $derived(text(data.venueName, 'Head Office Kasir Pintar'));
 	const mapsLabel = $derived(text(data.mapsLabel, eventLocation || 'Manyar Kartika III No 12, Menur Pumpungan, Kec. Sukolilo, Kota Surabaya'));
 	const buildingImage = $derived(safeURL(data.buildingImage) || safeURL(data.heroImage) || asset('office-front'));
@@ -79,7 +79,11 @@
 	const valueDefaults = ['Ruang untuk Berkolaborasi', 'Energi Baru untuk Berinovasi', 'Lingkungan yang Lebih Nyaman', 'Langkah Lebih Jauh untuk UMKM'];
 	const valueIcons = ['value-collaboration', 'value-innovation', 'value-comfort', 'value-growth'];
 	const valueEmphasis = ['Berkolaborasi', 'Berinovasi', 'Lebih Nyaman', 'UMKM'];
-	const values = $derived(valueDefaults.map((fallback, index) => text(Array.isArray(data.values) ? data.values[index] : '', fallback)));
+	const values = $derived.by(() => {
+		const configured = Array.isArray(data.values) ? data.values : [];
+		const oldWireframeValues = configured.length === 3 && configured[0] === 'Berani bertumbuh' && configured[1] === 'Melayani dengan hati' && configured[2] === 'Memberi dampak';
+		return valueDefaults.map((fallback, index) => text(oldWireframeValues ? '' : configured[index], fallback));
+	});
 	const socials = $derived([
 		{ name: 'Instagram', icon: 'social-instagram', url: safeURL(data.instagramUrl) },
 		{ name: 'YouTube', icon: 'social-youtube', url: safeURL(data.youtubeUrl) },
@@ -106,6 +110,7 @@
 		</h1>
 		<div class="go-cover-tagline">
 			{#if !data.eyebrow}<img src={asset('cover-tagline')} alt="New Space • New Energy • New Chapter" />
+			{:else if data.eyebrow === 'Satu langkah baru untuk tumbuh bersama'}<img src={asset('cover-tagline')} alt="New Space • New Energy • New Chapter" />
 			{:else}{text(data.eyebrow, '')}{/if}
 		</div>
 		<img class="go-cover-seal" src={asset('seal')} alt="" />
@@ -128,7 +133,6 @@
 				<a class="go-video-card" href={videoURL} target="_blank" rel="noopener noreferrer" aria-label="Open {text(data.videoTitle, 'Perjalanan Kasir Pintar')}">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</a>
 			{:else}<div class="go-video-card" aria-label="Video preview; video link not yet supplied">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</div>{/if}
 			<p>{#if videoCaption === 'Terus berusaha tumbuh bersama UMKM Indonesia'}Terus berusaha <strong>tumbuh bersama</strong><br />UMKM Indonesia{:else}{videoCaption}{/if}</p>
-			{#if text(data.storyBody, '')}<p>{text(data.storyBody, '')}</p>{/if}
 		</div>
 	</section>
 
