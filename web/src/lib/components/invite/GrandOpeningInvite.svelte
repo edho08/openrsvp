@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -70,7 +71,9 @@
 	const videoThumbnail = $derived(safeURL(data.videoThumbnail) || safeURL(data.storyImage) || asset('journey-poster'));
 	const videoURL = $derived(safeURL(data.videoUrl));
 	const mapImage = $derived(safeURL(data.mapImage) || asset('maps-preview'));
-	const mapURL = $derived(safeURL(data.mapsUrl) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation || mapsLabel)}`);
+	const configuredMapURL = $derived(safeURL(data.mapsUrl));
+	const mapURL = $derived(configuredMapURL && !/^https:\/\/maps\.google\.com\/\?q=Kasir\+Pintar(?:\+Surabaya)?$/i.test(configuredMapURL)
+		? configuredMapURL : 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
 	const weekday = $derived(dateLabel(eventDate, { weekday: 'long' }, 'Save the date').replace('Jumat', 'Jum’at'));
 	const fullDate = $derived(dateLabel(eventDate, { day: 'numeric', month: 'long', year: 'numeric' }, 'Tanggal akan diumumkan'));
 	const time = $derived(dateLabel(eventDate, { hour: '2-digit', minute: '2-digit' }, '--:--').replace('.', ':'));
@@ -92,6 +95,29 @@
 	const linkedinURL = $derived(safeURL(data.linkedinUrl));
 	let failedImages = $state<string[]>([]);
 	function fail(url: string) { if (!failedImages.includes(url)) failedImages = [...failedImages, url]; }
+	let coverScene: HTMLElement;
+	let openProgress = $state(0);
+	onMount(() => {
+		if (!window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		let frame = 0;
+		const update = () => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => {
+				const scrollRange = coverScene.offsetHeight - window.innerHeight;
+				openProgress = scrollRange > 0
+					? Math.max(0, Math.min(1, -coverScene.getBoundingClientRect().top / scrollRange))
+					: 0;
+			});
+		};
+		window.addEventListener('scroll', update, { passive: true });
+		window.addEventListener('resize', update, { passive: true });
+		update();
+		return () => {
+			window.removeEventListener('scroll', update);
+			window.removeEventListener('resize', update);
+			cancelAnimationFrame(frame);
+		};
+	});
 </script>
 
 {#snippet photo(url: string, fallback: string, label: string)}
@@ -100,8 +126,11 @@
 
 <article class="grand-opening-invite" aria-label={eventTitle || `${brandName} Grand Opening invitation`}
 	style="--go-primary: {color(primaryColor, '#10a37b')}; --go-secondary: {color(secondaryColor, '#0f926c')}; --go-font: {bodyFont};">
-	<section class="go-cover" aria-labelledby="go-cover-title">
+	<section class="go-cover" bind:this={coverScene} aria-labelledby="go-cover-title"
+		style="--go-open-progress: {openProgress}; --go-flap-angle: {openProgress * -155}deg; --go-cover-copy-opacity: {Math.max(0, 1 - openProgress * 2.2)}; --go-cover-copy-shift: {openProgress * -14}px; --go-seal-opacity: {Math.max(0, 1 - openProgress * 2.5)}; --go-seal-scale: {1 - openProgress * 0.28}; --go-letter-opacity: {Math.min(1, openProgress * 2.5)}; --go-letter-shift: {openProgress * -72}cqw;">
+		<div class="go-cover-stage"><div class="go-cover-artwork">
 		<img class="go-envelope-bottom" src={asset('envelope-bottom')} alt="" fetchpriority="high" />
+		<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {zone}</small><em>Untuk {recipient}</em></div>
 		<img class="go-envelope-top" src={asset('envelope-top')} alt="" />
 		<h1 id="go-cover-title" class="go-cover-title">
 			{#if title.toLowerCase() === 'grand opening'}
@@ -116,6 +145,7 @@
 		<img class="go-cover-seal" src={asset('seal')} alt="" />
 		<div class="go-cover-host"><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
 		<a class="go-scroll-cue" href="#go-invitation-title"><img src={asset('scroll')} alt="" /><span>Scroll ke Bawah</span></a>
+		</div></div>
 	</section>
 
 	<section class="go-invitation" aria-labelledby="go-invitation-title">
@@ -178,7 +208,7 @@
 	@font-face { font-family: 'Grand Opening Script'; src: url('/fonts/grand-opening-great-vibes.ttf') format('truetype'); font-display: swap; }
 	@font-face { font-family: 'Grand Opening Sans'; src: url('/fonts/plus-jakarta-sans-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 	@font-face { font-family: 'Grand Opening Sans'; src: url('/fonts/plus-jakarta-sans-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
-	.grand-opening-invite { container-type: inline-size; width: 100%; max-width: 1080px; margin: auto; overflow: hidden; background: #f7f7f7; color: #303030; font-family: var(--go-font), sans-serif; }
+	.grand-opening-invite { container-type: inline-size; width: 100%; max-width: 1080px; margin: auto; overflow: clip; background: #f7f7f7; color: #303030; font-family: var(--go-font), sans-serif; }
 	.grand-opening-invite :global(*) { box-sizing: border-box; }
 	h1, h2, p { margin: 0; }
 	img { display: block; width: 100%; height: auto; }
@@ -187,7 +217,11 @@
 	section, footer { position: relative; }
 	h2 { font-weight: 700; font-size: 5.9cqw; line-height: 1.18; }
 	.go-cover { height: 177.778cqw; color: #fff; text-align: center; }
+	.go-cover-stage { display: contents; }
+	.go-cover-artwork { position: absolute; inset: 0; container-type: inline-size; }
 	.go-envelope-bottom, .go-envelope-top { position: absolute; inset: 0 auto auto 0; width: 100%; pointer-events: none; }
+	.go-envelope-bottom { z-index: 0; }
+	.go-opening-letter { display: none; }
 	.go-cover-title { position: absolute; top: 10.185cqw; left: 17.685%; width: 64.63%; font-family: 'Grand Opening Script', cursive; font-size: 14cqw; font-weight: 400; line-height: 1; }
 	.go-cover-title small { display: block; font-family: 'Grand Opening Sans', sans-serif; font-size: 4.2cqw; font-weight: 700; }
 	.go-cover-tagline { position: absolute; top: 59.63cqw; left: 7.685%; width: 84.54%; font-size: 4.6cqw; line-height: 1.2; font-weight: 700; text-shadow: .3cqw .5cqw #087d63; }
@@ -229,7 +263,8 @@
 	.go-map-card { position: relative; display: block; width: 74.26%; margin: 6cqw auto 0; background: url('/invite/grand-opening/maps-frame.webp') center/100% 100% no-repeat; aspect-ratio: 802 / 415; padding: 1.8cqw; }
 	.go-map-image { height: 100%; overflow: hidden; border-radius: 2cqw; }
 	.go-map-image img { height: 100%; object-fit: cover; }
-	.go-map-link { position: absolute; bottom: -3.15cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; font-size: 2.6cqw; font-weight: 700; white-space: nowrap; }
+	.go-map-link { position: absolute; bottom: -3.15cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; font-size: 2.6cqw; font-weight: 700; white-space: nowrap; transition: filter .2s ease, transform .2s ease; }
+	.go-map-card:hover .go-map-link, .go-response :global(button[type='submit']:hover) { filter: brightness(1.08); transform: translateY(-2px); }
 	.go-office-photo { position: absolute; bottom: 0; left: 0; width: 100%; pointer-events: none; }
 	.go-rsvp-section { padding: 4.7cqw 8% 6cqw; text-align: center; }
 	.go-rsvp-section h2 { color: #109873; margin: 2cqw 0 6cqw; }
@@ -259,6 +294,29 @@
 	.go-linkedin { position: absolute; right: 8%; font-size: 3cqw; font-weight: 700; }
 	.go-website { font-size: 3.2cqw; margin-top: 7.4cqw; }
 	.go-footer-photo { margin-top: 1.3cqw; }
+	@media (max-width: 700px) {
+		.go-cover { height: 180svh; min-height: 0; background: #088f70; }
+		.go-cover-stage { position: sticky; top: 0; display: grid; place-items: center; width: 100vw; height: 100svh; margin-left: calc(50% - 50vw); overflow: hidden; background: #088f70 url('/invite/grand-opening/envelope-bottom.webp') center / cover no-repeat; }
+		.go-cover-artwork { position: relative; inset: auto; width: min(100%, 56.25svh); aspect-ratio: 9 / 16; overflow: hidden; background: #088f70; box-shadow: 0 24px 70px rgb(0 45 34 / 24%); }
+		.go-envelope-top { z-index: 2; transform-origin: 50% 0%; transform: perspective(1100px) rotateX(var(--go-flap-angle, 0deg)); backface-visibility: hidden; will-change: transform; }
+		.go-opening-letter { position: absolute; z-index: 1; bottom: 14cqw; left: 11%; width: 78%; min-height: 79cqw; display: grid; align-content: center; justify-items: center; gap: 2.5cqw; padding: 5cqw 4cqw; background: #fffdf4; color: #16785f; border: 1px solid rgb(190 157 91 / 60%); border-radius: 1.8cqw; box-shadow: 0 1.8cqw 5cqw rgb(0 42 33 / 24%); text-align: center; opacity: var(--go-letter-opacity, 0); transform: translateY(var(--go-letter-shift, 0cqw)); }
+		.go-opening-letter::before { content: ''; position: absolute; top: 3cqw; left: 50%; width: 16cqw; height: .4cqw; background: #c7a66a; transform: translateX(-50%); }
+		.go-opening-letter span { font-size: 2.5cqw; font-weight: 700; letter-spacing: .28em; }
+		.go-opening-letter strong { font-family: 'Grand Opening Script', cursive; font-size: 8cqw; font-weight: 400; line-height: 1; }
+		.go-opening-letter small { font-size: 2.8cqw; }
+		.go-opening-letter em { font-size: 2.7cqw; font-style: normal; }
+		.go-cover-title, .go-cover-tagline, .go-cover-host, .go-scroll-cue, .go-cover-seal { z-index: 3; }
+		.go-cover-title, .go-cover-tagline, .go-cover-host, .go-scroll-cue { opacity: var(--go-cover-copy-opacity, 1); transform: translateY(var(--go-cover-copy-shift, 0px)); }
+		.go-cover-seal { opacity: var(--go-seal-opacity, 1); transform: scale(var(--go-seal-scale, 1)); filter: drop-shadow(0 8px 14px rgb(0 45 34 / 26%)); }
+		.go-map-card { filter: drop-shadow(0 12px 22px rgb(0 45 34 / 16%)); }
+	}
+	@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+		.go-cover { height: auto; }
+		.go-cover-stage { position: static; display: contents; }
+		.go-cover-artwork { position: relative; width: 100%; aspect-ratio: 9 / 16; }
+		.go-envelope-top { transform: none; will-change: auto; }
+		.go-opening-letter { display: none; }
+	}
 	@media (prefers-reduced-motion: no-preference) { .go-scroll-cue img { animation: go-scroll 2s ease-in-out infinite; } }
 	@keyframes go-scroll { 50% { transform: translateY(.6cqw); } }
 </style>

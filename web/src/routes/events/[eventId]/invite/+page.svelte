@@ -56,7 +56,7 @@
 	let grandOpeningFooterImage = $state('');
 	let savedCustomData = $state<Record<string, unknown>>({});
 	let grandOpeningVideoUrl = $state('');
-	let grandOpeningMapsUrl = $state('');
+	let grandOpeningMapsUrl = $state('https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
 	let grandOpeningMapsLabel = $state('Manyar Kartika III No 12, Menur Pumpungan, Kec. Sukolilo, Kota Surabaya');
 	let grandOpeningInstagramUrl = $state('');
 	let grandOpeningLinkedInUrl = $state('');
@@ -226,7 +226,10 @@
 		grandOpeningMapImage = text('mapImage', grandOpeningMapImage);
 		grandOpeningFooterImage = text('footerImage', grandOpeningFooterImage);
 		grandOpeningVideoUrl = text('videoUrl', grandOpeningVideoUrl);
-		grandOpeningMapsUrl = text('mapsUrl', grandOpeningMapsUrl);
+		const savedMapsUrl = text('mapsUrl', grandOpeningMapsUrl);
+		grandOpeningMapsUrl = savedMapsUrl === 'https://maps.google.com/?q=Kasir+Pintar+Surabaya'
+			? 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6'
+			: savedMapsUrl;
 		grandOpeningMapsLabel = text('mapsLabel', grandOpeningMapsLabel);
 		grandOpeningInstagramUrl = text('instagramUrl', grandOpeningInstagramUrl);
 		grandOpeningLinkedInUrl = text('linkedinUrl', grandOpeningLinkedInUrl);

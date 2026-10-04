@@ -83,15 +83,56 @@ test('original assets and seven-section reference geometry', async ({ page }, te
 		const section = page.locator(`.${sections[i]}`);
 		await section.scrollIntoViewIfNeeded();
 		await expect.poll(() => section.evaluate(el => [...el.querySelectorAll('img')].every(image => image.complete && image.naturalWidth > 0))).toBe(true);
-		const box = await section.boundingBox();
+		const geometry = i === 0 ? section.locator('.go-cover-artwork') : section;
+		const box = await geometry.boundingBox();
 		expect(box).not.toBeNull();
 		// Live RSVP retains required contact and status fields, so it must grow.
 		if (i !== 5) expect(Math.abs(box!.height / box!.width - heights[i] / 1080)).toBeLessThan(0.09);
-		await section.screenshot({ path: testInfo.outputPath(`${sections[i]}.png`), animations: 'disabled' });
+		await geometry.screenshot({ path: testInfo.outputPath(`${sections[i]}.png`), animations: 'disabled' });
 	}
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 	await expect(page.locator('.go-cover-seal')).toHaveAttribute('src', '/invite/grand-opening/seal.webp');
 	await expect(page.locator('.go-detail-row img').first()).toHaveAttribute('src', '/invite/grand-opening/detail-calendar.webp');
+});
+
+test('mobile cover opens with scroll and uses the supplied Maps location by default', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, questions, invite: { ...invite, customData: JSON.stringify({ mapsUrl: 'https://maps.google.com/?q=Kasir+Pintar+Surabaya' }) }
+	} } }));
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	await expect(page.locator('.go-map-card')).toHaveAttribute('href', 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
+	await expect(page.locator('.go-map-link')).toHaveText('Lihat Lokasi di Google Maps');
+
+	const scene = page.locator('.go-cover');
+	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => getComputedStyle(el).opacity)).toBe('0');
+	const sceneTop = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
+	const sceneRange = await scene.evaluate(el => (el as HTMLElement).offsetHeight - window.innerHeight);
+	expect(sceneRange).toBeGreaterThan(0);
+	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range * 0.6), { top: sceneTop, range: sceneRange });
+	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBeGreaterThan(0.5);
+	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-flap-angle')))).toBeLessThan(-70);
+	await expect.poll(() => page.locator('.go-cover-stage').evaluate(el => Math.abs(el.getBoundingClientRect().top))).toBeLessThan(2);
+	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
+	await expect.poll(() => page.locator('.go-cover-title').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeLessThan(0.05);
+	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+	const coverBottom = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY + (el as HTMLElement).offsetHeight);
+	await page.evaluate(bottom => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, bottom + 10); }, coverBottom);
+	await expect(page.locator('#go-invitation-title')).toBeInViewport();
+	await expect(page.locator('.go-cover-stage')).not.toBeInViewport();
+});
+
+test('mobile envelope stays static when reduced motion is requested', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	const scene = page.locator('.go-cover');
+	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).position)).toBe('relative');
+	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).getPropertyValue('--go-open-progress').trim())).toBe('0');
+	await expect(page.locator('#rsvp-form')).toHaveCount(1);
 });
 
 test('manage link personalizes and updates existing response', async ({ page }) => {
