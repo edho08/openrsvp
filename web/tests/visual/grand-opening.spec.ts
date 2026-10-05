@@ -68,6 +68,37 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	expect(errors).toEqual([]);
 });
 
+test('below-cover photos reveal through a moving aperture without fading', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	const article = page.locator('.grand-opening-invite');
+	const photo = page.locator('.go-building-photo');
+	await expect.poll(() => article.evaluate(el => el.classList.contains('go-reveal-ready'))).toBe(true);
+	await expect.poll(() => photo.evaluate(el => el.classList.contains('go-revealed'))).toBe(false);
+	await expect.poll(() => photo.evaluate(el => getComputedStyle(el).clipPath)).toContain('42%');
+	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
+	await photo.scrollIntoViewIfNeeded();
+	await expect.poll(() => photo.evaluate(el => el.classList.contains('go-revealed'))).toBe(true);
+	await expect.poll(() => photo.evaluate(el => getComputedStyle(el).clipPath)).not.toContain('42%');
+	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
+	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+});
+
+test('below-cover reveals remain visible when IntersectionObserver is unavailable', async ({ page }) => {
+	await page.addInitScript(() => { Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: undefined }); });
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	const article = page.locator('.grand-opening-invite');
+	const photo = page.locator('.go-building-photo');
+	await expect.poll(() => article.evaluate(el => el.classList.contains('go-reveal-ready'))).toBe(false);
+	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
+	await expect(photo).toHaveCSS('clip-path', 'none');
+	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+});
+
 test('original assets and seven-section reference geometry', async ({ page }, testInfo) => {
 	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
 		event, questions, invite: { ...invite, font: 'Inter', primaryColor: '#10A37B', secondaryColor: '#10A37B',
@@ -151,6 +182,8 @@ test('mobile envelope stays static when reduced motion is requested', async ({ p
 	const scene = page.locator('.go-cover');
 	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).position)).toBe('relative');
 	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).getPropertyValue('--go-open-progress').trim())).toBe('0');
+	await expect(page.locator('.go-building-photo')).toHaveCSS('clip-path', 'none');
+	await expect(page.locator('.go-building-photo')).toHaveCSS('transform', 'none');
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
 });
 
