@@ -51,11 +51,12 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
 	await expect(page.locator('.go-value-card')).toHaveCount(4);
 	await expect(page.locator('.go-building-placeholder')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://example.com/social');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di LinkedIn' })).toHaveCount(0);
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/kasirpintar/');
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di YouTube' })).toHaveAttribute('href', 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA');
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di TikTok' })).toHaveAttribute('href', 'https://www.tiktok.com/@kasirpintar?lang=en');
-	await expect(page.getByRole('link', { name: 'Kasir Pintar di Facebook' })).toHaveAttribute('href', 'https://www.facebook.com/kasirpintar.owline');
+	await expect(page.locator('.go-socials > a')).toHaveCount(3);
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di Facebook' })).toHaveCount(0);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 	expect(await page.locator('.grand-opening-invite').evaluate(el => {
 		const form = el.querySelector('#rsvp-form');
