@@ -108,15 +108,26 @@ test('mobile cover opens with scroll and uses the supplied Maps location by defa
 
 	const scene = page.locator('.go-cover');
 	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => getComputedStyle(el).opacity)).toBe('0');
+	const shell = page.locator('.go-envelope-shell');
+	const letter = page.locator('.go-opening-letter');
+	const shellTopBefore = (await shell.boundingBox())?.y;
+	const letterTopBefore = (await letter.boundingBox())?.y;
+	expect(shellTopBefore).not.toBeUndefined();
+	expect(letterTopBefore).not.toBeUndefined();
 	const sceneTop = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
 	const sceneRange = await scene.evaluate(el => (el as HTMLElement).offsetHeight - window.innerHeight);
 	expect(sceneRange).toBeGreaterThan(0);
 	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range * 0.6), { top: sceneTop, range: sceneRange });
 	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBeGreaterThan(0.5);
 	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-flap-angle')))).toBeLessThan(-70);
+	expect(await page.locator('.go-cover-title').evaluate(el => Boolean(el.closest('.go-envelope-flap')))).toBe(true);
+	const shellTopDuring = (await shell.boundingBox())?.y;
+	const letterTopDuring = (await letter.boundingBox())?.y;
+	expect(shellTopDuring! - shellTopBefore!).toBeGreaterThan(100);
+	expect(letterTopBefore! - letterTopDuring!).toBeGreaterThan(100);
 	await expect.poll(() => page.locator('.go-cover-stage').evaluate(el => Math.abs(el.getBoundingClientRect().top))).toBeLessThan(2);
 	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
-	await expect.poll(() => page.locator('.go-cover-title').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeLessThan(0.05);
+	await expect.poll(() => page.locator('.go-cover-title').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.95);
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
 	const coverBottom = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY + (el as HTMLElement).offsetHeight);
 	await page.evaluate(bottom => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, bottom + 10); }, coverBottom);
@@ -133,6 +144,20 @@ test('mobile envelope stays static when reduced motion is requested', async ({ p
 	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).position)).toBe('relative');
 	await expect.poll(() => scene.evaluate(el => getComputedStyle(el).getPropertyValue('--go-open-progress').trim())).toBe('0');
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+});
+
+test('resizing a loaded desktop page to mobile enables the envelope reveal', async ({ page }) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+	const scene = page.locator('.go-cover');
+	const sceneTop = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
+	const sceneRange = await scene.evaluate(el => (el as HTMLElement).offsetHeight - window.innerHeight);
+	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range * 0.5), { top: sceneTop, range: sceneRange });
+	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBeGreaterThan(0.45);
+	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
 });
 
 test('manage link personalizes and updates existing response', async ({ page }) => {
