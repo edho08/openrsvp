@@ -52,7 +52,10 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	await expect(page.locator('.go-value-card')).toHaveCount(4);
 	await expect(page.locator('.go-building-placeholder')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://example.com/social');
-	await expect(page.getByRole('link', { name: 'Instagram', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/kasirpintar/');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di YouTube' })).toHaveAttribute('href', 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di TikTok' })).toHaveAttribute('href', 'https://www.tiktok.com/@kasirpintar?lang=en');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di Facebook' })).toHaveAttribute('href', 'https://www.facebook.com/kasirpintar.owline');
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 	expect(await page.locator('.grand-opening-invite').evaluate(el => {
 		const form = el.querySelector('#rsvp-form');
@@ -97,6 +100,29 @@ test('below-cover reveals remain visible when IntersectionObserver is unavailabl
 	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
 	await expect(photo).toHaveCSS('clip-path', 'none');
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+});
+
+test('mobile map CTA stays above the office photo and the cover is full bleed', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/i/test?to=Rina%20Pratama');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	const pageShell = page.locator('.grand-opening-page');
+	const artwork = page.locator('.go-cover-artwork');
+	await expect(pageShell).toHaveCSS('padding', '0px');
+	await expect.poll(() => artwork.evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(390);
+	const mapCard = page.locator('.go-map-card');
+	const mapButton = page.locator('.go-map-link');
+	await mapButton.scrollIntoViewIfNeeded();
+	await expect.poll(() => mapCard.evaluate(el => el.classList.contains('go-revealed'))).toBe(true);
+	await expect(mapCard).toHaveCSS('clip-path', 'inset(0px)');
+	await expect(mapButton).toBeVisible();
+	const hit = await mapButton.evaluate(el => {
+		const box = el.getBoundingClientRect();
+		const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+		return top?.closest('.go-map-card') === el.closest('.go-map-card');
+	});
+	expect(hit).toBe(true);
+	await expect(mapCard).toHaveAttribute('href', 'https://example.com/map');
 });
 
 test('original assets and seven-section reference geometry', async ({ page }, testInfo) => {

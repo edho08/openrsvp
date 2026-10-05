@@ -88,9 +88,10 @@
 		return valueDefaults.map((fallback, index) => text(oldWireframeValues ? '' : configured[index], fallback));
 	});
 	const socials = $derived([
-		{ name: 'Instagram', icon: 'social-instagram', url: safeURL(data.instagramUrl) },
-		{ name: 'YouTube', icon: 'social-youtube', url: safeURL(data.youtubeUrl) },
-		{ name: 'TikTok', icon: 'social-tiktok', url: safeURL(data.tiktokUrl) }
+		{ name: 'Instagram', icon: 'social-instagram', url: safeURL(data.instagramUrl) || 'https://www.instagram.com/kasirpintar/' },
+		{ name: 'YouTube', icon: 'social-youtube', url: safeURL(data.youtubeUrl) || 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA' },
+		{ name: 'TikTok', icon: 'social-tiktok', url: safeURL(data.tiktokUrl) || 'https://www.tiktok.com/@kasirpintar?lang=en' },
+		{ name: 'Facebook', icon: '', url: safeURL(data.facebookUrl) || 'https://www.facebook.com/kasirpintar.owline' }
 	]);
 	const linkedinURL = $derived(safeURL(data.linkedinUrl));
 	let failedImages = $state<string[]>([]);
@@ -238,11 +239,23 @@
 	</section>
 
 	<footer class="go-footer">
-		<div class="go-footer-logo">{#if brandName === 'Kasir Pintar'}<img src={asset('brand-logo')} alt="Kasir Pintar" loading="lazy" />{:else}{brandName}{/if}</div>
-		<h2 class="go-see-you go-reveal-rise"><img src={asset('closing-title')} alt="See You at Our New Office" loading="lazy" /></h2>
-		<p class="go-closing-copy go-reveal-rise">{closingBody}</p>
-		<nav class="go-socials" aria-label="Social links">{#each socials as social}{#if social.url}<a href={social.url} target="_blank" rel="noopener noreferrer" aria-label={social.name}><img src={asset(social.icon)} alt="" loading="lazy" /></a>{:else}<span><img src={asset(social.icon)} alt={social.name} loading="lazy" /></span>{/if}{/each}{#if linkedinURL}<a class="go-linkedin" href={linkedinURL} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a>{/if}</nav>
-		<p class="go-website">www.<strong>kasirpintar</strong>.co.id</p>
+		<div class="go-footer-content">
+			<div class="go-footer-logo">{#if brandName === 'Kasir Pintar'}<img src={asset('brand-logo')} alt="Kasir Pintar" loading="lazy" />{:else}{brandName}{/if}</div>
+			<h2 class="go-see-you go-reveal-rise"><img src={asset('closing-title')} alt="See You at Our New Office" loading="lazy" /></h2>
+			<p class="go-closing-copy go-reveal-rise">{closingBody}</p>
+			<div class="go-social-block go-reveal-rise">
+				<p class="go-social-label">Ikuti perjalanan kami</p>
+				<nav class="go-socials" aria-label="Media sosial Kasir Pintar">
+					{#each socials as social}
+						<a href={social.url} target="_blank" rel="noopener noreferrer" aria-label="Kasir Pintar di {social.name}">
+							{#if social.icon}<img src={asset(social.icon)} alt="" loading="lazy" />{:else}<span class="go-facebook-icon" aria-hidden="true">f</span>{/if}
+						</a>
+					{/each}
+					{#if linkedinURL}<a href={linkedinURL} target="_blank" rel="noopener noreferrer" aria-label="Kasir Pintar di LinkedIn"><span class="go-linkedin-icon" aria-hidden="true">in</span></a>{/if}
+				</nav>
+			</div>
+			<a class="go-website" href="https://kasirpintar.co.id/" target="_blank" rel="noopener noreferrer">kasirpintar.co.id <span aria-hidden="true">↗</span></a>
+		</div>
 		<div class="go-footer-photo go-reveal-image">{@render photo(footerImage, 'office-closing', `${venueName} tampak depan`)}</div>
 	</footer>
 </article>
@@ -312,12 +325,12 @@
 	.go-detail-row p { font-size: 4cqw; line-height: 1.18; }
 	.go-detail-row strong, .go-detail-row span { display: block; }
 	.go-detail-row:last-child span { font-size: 3.2cqw; }
-	.go-map-card { position: relative; display: block; width: 74.26%; margin: 6cqw auto 0; background: url('/invite/grand-opening/maps-frame.webp') center/100% 100% no-repeat; aspect-ratio: 802 / 415; padding: 1.8cqw; }
+	.go-map-card { position: relative; z-index: 2; display: block; width: 74.26%; margin: 6cqw auto 0; background: url('/invite/grand-opening/maps-frame.webp') center/100% 100% no-repeat; aspect-ratio: 802 / 415; padding: 1.8cqw; }
 	.go-map-image { height: 100%; overflow: hidden; border-radius: 2cqw; }
 	.go-map-image img { height: 100%; object-fit: cover; }
-	.go-map-link { position: absolute; bottom: -3.15cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; font-size: 2.6cqw; font-weight: 700; white-space: nowrap; transition: filter .2s ease, transform .2s ease; }
+	.go-map-link { position: absolute; z-index: 3; bottom: 1.8cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; font-size: 2.6cqw; font-weight: 700; white-space: nowrap; transition: filter .2s ease, transform .2s ease; }
 	.go-map-card:hover .go-map-link, .go-response :global(button[type='submit']:hover) { filter: brightness(1.08); transform: translateY(-2px); }
-	.go-office-photo { position: absolute; bottom: 0; left: 0; width: 100%; pointer-events: none; }
+	.go-office-photo { position: absolute; z-index: 0; bottom: 0; left: 0; width: 100%; pointer-events: none; }
 	.go-rsvp-section { padding: 4.7cqw 8% 6cqw; text-align: center; }
 	.go-rsvp-section h2 { color: #109873; margin: 2cqw 0 6cqw; }
 	.go-response { text-align: left; }
@@ -337,15 +350,22 @@
 	.go-form-preview label { display: block; margin-bottom: 6cqw; }
 	.go-form-preview input { display: block; width: 100%; height: 11cqw; border: 0; border-radius: 3cqw; background: #f7f7f7; margin-top: 2cqw; }
 	.go-preview-option { margin-top: 2cqw; padding: 1.5cqw; background: #f7f7f7; color: #303030; border-radius: 3cqw; }
-	.go-footer { min-height: 159.074cqw; padding-top: 8.4cqw; text-align: center; }
-	.go-footer-logo { width: 34.26%; margin: auto; font-size: 4cqw; font-weight: 700; }
-	.go-see-you { width: 53.43%; margin: 9.8cqw auto 0; }
-	.go-closing-copy { margin: 7.3cqw auto 0; width: 58%; font-size: 3.2cqw; line-height: 1.18; text-wrap: balance; }
-	.go-socials { display: flex; justify-content: center; align-items: center; gap: 11.5cqw; margin-top: 11.8cqw; }
-	.go-socials img { width: 9.72cqw; }
-	.go-linkedin { position: absolute; right: 8%; font-size: 3cqw; font-weight: 700; }
-	.go-website { font-size: 3.2cqw; margin-top: 7.4cqw; }
-	.go-footer-photo { margin-top: 1.3cqw; }
+	.go-footer { position: relative; overflow: hidden; padding-top: 9cqw; text-align: center; background: linear-gradient(180deg, #f1f8f3 0%, #e2f1e8 100%); }
+	.go-footer-content { position: relative; z-index: 1; width: 100%; padding: 0 7% 7cqw; }
+	.go-footer-logo { width: 30%; margin: auto; }
+	.go-see-you { width: 56%; margin: 6cqw auto 0; }
+	.go-closing-copy { margin: 3.5cqw auto 0; width: min(78%, 62cqw); color: #35594d; font-size: 3.4cqw; line-height: 1.35; text-wrap: balance; }
+	.go-social-block { width: min(100%, 82cqw); margin: 7cqw auto 0; padding: 4.5cqw 4cqw; border: 1px solid rgb(16 110 81 / 13%); border-radius: 4cqw; background: rgb(255 255 255 / 78%); box-shadow: 0 2cqw 6cqw rgb(15 76 58 / 7%); }
+	.go-social-label { color: #466b5d; font-size: 2.9cqw; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+	.go-socials { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 3.5cqw; margin-top: 3.4cqw; }
+	.go-socials > a { display: grid; place-items: center; width: 11cqw; height: 11cqw; border: 1px solid rgb(16 110 81 / 12%); border-radius: 50%; background: white; box-shadow: 0 1cqw 2.5cqw rgb(15 76 58 / 8%); transition: transform .2s ease, box-shadow .2s ease; }
+	.go-socials > a:hover { transform: translateY(-2px); box-shadow: 0 2cqw 4cqw rgb(15 76 58 / 16%); }
+	.go-socials img { width: 5.4cqw; height: 5.4cqw; object-fit: contain; }
+	.go-facebook-icon, .go-linkedin-icon { color: #087f5b; font-family: Arial, sans-serif; font-size: 6.2cqw; font-weight: 700; line-height: 1; }
+	.go-linkedin-icon { font-size: 4.4cqw; letter-spacing: -.08em; }
+	.go-website { display: inline-flex; align-items: center; gap: 1.4cqw; margin-top: 5cqw; color: #087f5b; font-size: 3.3cqw; font-weight: 700; }
+	.go-footer-photo { position: relative; z-index: 0; margin-top: 0; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 22%); mask-image: linear-gradient(to bottom, transparent 0%, black 22%); }
+	.go-footer-photo img { display: block; }
 	@media (max-width: 700px) {
 		.go-cover { height: 180svh; min-height: 0; background: #088f70; }
 		.go-cover-stage { position: sticky; top: 0; display: grid; place-items: center; width: 100vw; height: 100svh; margin-left: calc(50% - 50vw); overflow: hidden; background: #088f70 url('/invite/grand-opening/envelope-bottom.webp') center / cover no-repeat; }

@@ -750,6 +750,9 @@
 </div>
 
 <style>
+	@media (max-width: 700px) {
+		.grand-opening-page { padding: 0; }
+	}
 	.rsvp-option {
 		display: flex;
 		flex-direction: column;
