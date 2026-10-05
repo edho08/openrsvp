@@ -135,11 +135,14 @@
 <article class="grand-opening-invite" aria-label={eventTitle || `${brandName} Grand Opening invitation`}
 	style="--go-primary: {color(primaryColor, '#10a37b')}; --go-secondary: {color(secondaryColor, '#0f926c')}; --go-font: {bodyFont};">
 	<section class="go-cover" bind:this={coverScene} aria-labelledby="go-cover-title"
-		style="--go-open-progress: {openProgress}; --go-flap-angle: {openProgress * -155}deg; --go-envelope-drop: {openProgress * 90}cqw; --go-letter-opacity: {Math.min(1, openProgress * 2.5)}; --go-letter-shift: {openProgress * -72}cqw;">
+		style="--go-open-progress: {openProgress}; --go-gate-lift: {openProgress * -130}cqw; --go-envelope-drop: {openProgress * 90 + openProgress * openProgress * 100}cqw; --go-letter-rise: {openProgress * -60}cqw;">
 		<div class="go-cover-stage"><div class="go-cover-artwork">
-		<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {zone}</small><em>Untuk {recipient}</em></div>
-		<div class="go-envelope-shell">
-			<img class="go-envelope-bottom" src={asset('envelope-bottom')} alt="" fetchpriority="high" />
+			<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {zone}</small><em>Untuk {recipient}</em></div>
+			<div class="go-envelope-body">
+				<img class="go-envelope-bottom" src={asset('envelope-bottom')} alt="" fetchpriority="high" />
+				<div class="go-cover-host"><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
+				<a class="go-scroll-cue" href="#go-invitation-title"><img src={asset('scroll')} alt="" /><span>Scroll ke Bawah</span></a>
+			</div>
 			<div class="go-envelope-flap">
 				<img class="go-envelope-top" src={asset('envelope-top')} alt="" />
 				<h1 id="go-cover-title" class="go-cover-title">
@@ -154,9 +157,6 @@
 				</div>
 				<img class="go-cover-seal" src={asset('seal')} alt="" />
 			</div>
-			<div class="go-cover-host"><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
-			<a class="go-scroll-cue" href="#go-invitation-title"><img src={asset('scroll')} alt="" /><span>Scroll ke Bawah</span></a>
-		</div>
 		</div></div>
 	</section>
 
@@ -230,9 +230,9 @@
 	h2 { font-weight: 700; font-size: 5.9cqw; line-height: 1.18; }
 	.go-cover { height: 177.778cqw; color: #fff; text-align: center; }
 	.go-cover-stage { display: contents; }
-	.go-cover-artwork { position: absolute; inset: 0; container-type: inline-size; }
-	.go-envelope-shell { position: absolute; z-index: 1; inset: 0; container-type: inline-size; transform: translateY(var(--go-envelope-drop, 0cqw)); }
-	.go-envelope-flap { position: absolute; z-index: 2; inset: 0 auto auto 0; width: 100%; height: 120cqw; container-type: inline-size; transform-origin: 50% 0%; }
+	.go-cover-artwork { position: absolute; inset: 0; container-type: inline-size; background: #088f70 url('/invite/grand-opening/envelope-bottom.webp') center / 100% 100% no-repeat; }
+	.go-envelope-body { position: absolute; z-index: 2; inset: 0; container-type: inline-size; transform: translate3d(0, var(--go-envelope-drop, 0cqw), 0); transform-origin: 50% 0%; will-change: transform; }
+	.go-envelope-flap { position: absolute; z-index: 3; inset: 0 auto auto 0; width: 100%; height: 177.778cqw; container-type: inline-size; transform: translate3d(0, var(--go-gate-lift, 0cqw), 0); will-change: transform; }
 	.go-envelope-bottom, .go-envelope-top { position: absolute; inset: 0 auto auto 0; width: 100%; pointer-events: none; }
 	.go-envelope-bottom { z-index: 0; }
 	.go-opening-letter { display: none; }
@@ -312,16 +312,15 @@
 		.go-cover { height: 180svh; min-height: 0; background: #088f70; }
 		.go-cover-stage { position: sticky; top: 0; display: grid; place-items: center; width: 100vw; height: 100svh; margin-left: calc(50% - 50vw); overflow: hidden; background: #088f70 url('/invite/grand-opening/envelope-bottom.webp') center / cover no-repeat; }
 		.go-cover-artwork { position: relative; inset: auto; width: min(100%, 56.25svh); aspect-ratio: 9 / 16; overflow: hidden; background: #088f70; box-shadow: 0 24px 70px rgb(0 45 34 / 24%); }
-		.go-envelope-shell { will-change: transform; }
-		.go-envelope-flap { transform: perspective(1100px) rotateX(var(--go-flap-angle, 0deg)); backface-visibility: hidden; transform-style: preserve-3d; will-change: transform; }
-		.go-envelope-flap > *:not(.go-envelope-top) { z-index: 3; }
-		.go-opening-letter { position: absolute; z-index: 2; bottom: 14cqw; left: 11%; width: 78%; min-height: 79cqw; display: grid; align-content: center; justify-items: center; gap: 2.5cqw; padding: 5cqw 4cqw; background: #fffdf4; color: #16785f; border: 1px solid rgb(190 157 91 / 60%); border-radius: 1.8cqw; box-shadow: 0 1.8cqw 5cqw rgb(0 42 33 / 24%); text-align: center; opacity: var(--go-letter-opacity, 0); transform: translateY(var(--go-letter-shift, 0cqw)); }
+		.go-envelope-body { will-change: transform; }
+		.go-envelope-flap { will-change: transform; }
+		.go-opening-letter { position: absolute; z-index: 1; bottom: 14cqw; left: 11%; width: 78%; min-height: 79cqw; display: grid; align-content: center; justify-items: center; gap: 2.5cqw; padding: 5cqw 4cqw; background: #fffdf4; color: #16785f; border: 1px solid rgb(190 157 91 / 60%); border-radius: 1.8cqw; box-shadow: 0 1.8cqw 5cqw rgb(0 42 33 / 24%); text-align: center; opacity: 1; transform: translate3d(0, var(--go-letter-rise, 0cqw), 0); will-change: transform; }
 		.go-opening-letter::before { content: ''; position: absolute; top: 3cqw; left: 50%; width: 16cqw; height: .4cqw; background: #c7a66a; transform: translateX(-50%); }
 		.go-opening-letter span { font-size: 2.5cqw; font-weight: 700; letter-spacing: .28em; }
 		.go-opening-letter strong { font-family: 'Grand Opening Script', cursive; font-size: 8cqw; font-weight: 400; line-height: 1; }
 		.go-opening-letter small { font-size: 2.8cqw; }
 		.go-opening-letter em { font-size: 2.7cqw; font-style: normal; }
-		.go-cover-host, .go-scroll-cue { position: absolute; z-index: 3; }
+		.go-cover-host, .go-scroll-cue { position: absolute; z-index: 1; }
 		.go-cover-seal { filter: drop-shadow(0 8px 14px rgb(0 45 34 / 26%)); }
 		.go-map-card { filter: drop-shadow(0 12px 22px rgb(0 45 34 / 16%)); }
 	}
@@ -329,7 +328,7 @@
 		.go-cover { height: auto; }
 		.go-cover-stage { position: static; display: contents; }
 		.go-cover-artwork { position: relative; width: 100%; aspect-ratio: 9 / 16; }
-		.go-envelope-shell { transform: none; will-change: auto; }
+		.go-envelope-body { transform: none; will-change: auto; }
 		.go-envelope-flap { transform: none; will-change: auto; }
 		.go-opening-letter { display: none; }
 	}

@@ -107,28 +107,36 @@ test('mobile cover opens with scroll and uses the supplied Maps location by defa
 	await expect(page.locator('.go-map-link')).toHaveText('Lihat Lokasi di Google Maps');
 
 	const scene = page.locator('.go-cover');
-	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => getComputedStyle(el).opacity)).toBe('0');
-	const shell = page.locator('.go-envelope-shell');
+	const body = page.locator('.go-envelope-body');
+	const flap = page.locator('.go-envelope-flap');
 	const letter = page.locator('.go-opening-letter');
-	const shellTopBefore = (await shell.boundingBox())?.y;
+	await expect.poll(() => letter.evaluate(el => getComputedStyle(el).opacity)).toBe('1');
+	const bodyTopBefore = (await body.boundingBox())?.y;
+	const flapTopBefore = (await flap.boundingBox())?.y;
 	const letterTopBefore = (await letter.boundingBox())?.y;
-	expect(shellTopBefore).not.toBeUndefined();
+	expect(bodyTopBefore).not.toBeUndefined();
+	expect(flapTopBefore).not.toBeUndefined();
 	expect(letterTopBefore).not.toBeUndefined();
 	const sceneTop = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
 	const sceneRange = await scene.evaluate(el => (el as HTMLElement).offsetHeight - window.innerHeight);
 	expect(sceneRange).toBeGreaterThan(0);
 	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range * 0.6), { top: sceneTop, range: sceneRange });
 	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBeGreaterThan(0.5);
-	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-flap-angle')))).toBeLessThan(-70);
 	expect(await page.locator('.go-cover-title').evaluate(el => Boolean(el.closest('.go-envelope-flap')))).toBe(true);
-	const shellTopDuring = (await shell.boundingBox())?.y;
+	const bodyTopDuring = (await body.boundingBox())?.y;
+	const flapTopDuring = (await flap.boundingBox())?.y;
 	const letterTopDuring = (await letter.boundingBox())?.y;
-	expect(shellTopDuring! - shellTopBefore!).toBeGreaterThan(100);
+	expect(bodyTopDuring! - bodyTopBefore!).toBeGreaterThan(100);
+	expect(flapTopDuring! - flapTopBefore!).toBeLessThan(-100);
 	expect(letterTopBefore! - letterTopDuring!).toBeGreaterThan(100);
 	await expect.poll(() => page.locator('.go-cover-stage').evaluate(el => Math.abs(el.getBoundingClientRect().top))).toBeLessThan(2);
-	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
+	await expect.poll(() => letter.evaluate(el => getComputedStyle(el).opacity)).toBe('1');
+	expect(await scene.evaluate(el => el.style.getPropertyValue('--go-flap-angle'))).toBe('');
 	await expect.poll(() => page.locator('.go-cover-title').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.95);
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range), { top: sceneTop, range: sceneRange });
+	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBe(1);
+	await expect.poll(() => letter.evaluate(el => getComputedStyle(el).opacity)).toBe('1');
 	const coverBottom = await scene.evaluate(el => el.getBoundingClientRect().top + window.scrollY + (el as HTMLElement).offsetHeight);
 	await page.evaluate(bottom => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, bottom + 10); }, coverBottom);
 	await expect(page.locator('#go-invitation-title')).toBeInViewport();
@@ -157,7 +165,7 @@ test('resizing a loaded desktop page to mobile enables the envelope reveal', asy
 	const sceneRange = await scene.evaluate(el => (el as HTMLElement).offsetHeight - window.innerHeight);
 	await page.evaluate(({ top, range }) => window.scrollTo(0, top + range * 0.5), { top: sceneTop, range: sceneRange });
 	await expect.poll(() => scene.evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue('--go-open-progress')))).toBeGreaterThan(0.45);
-	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => parseFloat(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
+	await expect.poll(() => page.locator('.go-opening-letter').evaluate(el => getComputedStyle(el).opacity)).toBe('1');
 });
 
 test('manage link personalizes and updates existing response', async ({ page }) => {
