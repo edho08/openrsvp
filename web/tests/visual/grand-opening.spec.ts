@@ -7,6 +7,7 @@ const event = {
 	title: 'Grand Opening Test', description: 'A reusable event',
 	eventDate: '2026-10-23T01:00:00Z', timezone: 'Asia/Jakarta',
 	location: 'Head Office, Surabaya', contactRequirement: 'email',
+	collectOrganization: true,
 	rsvpsClosed: false, atCapacity: false, commentsEnabled: false
 };
 const invite = {
@@ -17,9 +18,9 @@ const invite = {
 		heroImage: '/missing-photo.jpg', instagramUrl: 'javascript:alert(1)',
 		linkedinUrl: 'https://example.com/social', mapsUrl: 'https://example.com/map' })
 };
-const attendee = { id: 'guest', name: 'Existing Guest', email: 'guest@example.com',
+const attendee = { id: 'guest', name: 'Existing Guest', organization: 'Kasir Pintar', email: 'guest@example.com',
 	rsvpStatus: 'attending', rsvpToken: 'manage', plusOnes: 0, dietaryNotes: '' };
-const questions = [{ id: 'organization', type: 'text', label: 'Instansi / Perusahaan', required: false, options: [], sortOrder: 0 }];
+const questions = [{ id: 'dietary', type: 'text', label: 'Dietary requirement', required: false, options: [], sortOrder: 0 }];
 
 test.beforeEach(async ({ page }) => {
 	await page.route('**/api/v1/config', route => route.fulfill({ json: { data: { smsEnabled: false } } }));
@@ -30,7 +31,8 @@ test.beforeEach(async ({ page }) => {
 			const payload = route.request().postDataJSON();
 			expect(payload.name).toBe('New Guest');
 			expect(payload.rsvpStatus).toBe('attending');
-			expect(payload.answers.organization).toBe('Kasir Pintar');
+			expect(payload.answers.dietary).toBe('Vegetarian');
+			expect(payload.organization).toBe('Kasir Pintar');
 			await route.fulfill({ json: { data: { rsvpToken: 'manage' } } });
 		} else await route.fulfill({ json: { data: { event, invite, questions } } });
 	});
@@ -38,6 +40,7 @@ test.beforeEach(async ({ page }) => {
 		if (route.request().method() === 'PATCH') {
 			const payload = route.request().postDataJSON();
 			expect(payload.rsvpStatus).toBe('declined');
+			expect(payload.organization).toBe('Kasir Pintar East');
 			await route.fulfill({ json: { data: { ...attendee, ...payload } } });
 		} else await route.fulfill({ json: { data: { event, invite, attendee, shareToken: 'test', questions: [], answers: [] } } });
 	});
@@ -64,7 +67,9 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 		return !!form && !!footer && !!(form.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING);
 	})).toBe(true);
 	await page.locator('#rsvp-name').fill('New Guest');
-	await page.getByLabel('Instansi / Perusahaan').fill('Kasir Pintar');
+	await expect(page.locator('#rsvp-organization')).not.toHaveAttribute('required', '');
+	await page.getByLabel('Dietary requirement').fill('Vegetarian');
+	await page.getByLabel(/Instansi \/ Perusahaan/).fill('Kasir Pintar');
 	await page.locator('#rsvp-email').fill('new@example.com');
 	await page.getByRole('button', { name: 'KIRIM RSVP', exact: true }).click();
 	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
@@ -72,35 +77,97 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	expect(errors).toEqual([]);
 });
 
-test('below-cover photos reveal through a moving aperture without fading', async ({ page }) => {
+test('Grand Opening accepts phone instead of email when event allows either contact', async ({ page }) => {
+	await page.route('**/api/v1/config', route => route.fulfill({ json: { data: { smsEnabled: true } } }));
+	await page.route('**/api/v1/rsvp/public/test', async route => {
+		if (route.request().method() === 'POST') {
+			const payload = route.request().postDataJSON();
+			expect(payload.email).toBe('');
+			expect(payload.phone).toBe('+14155552671');
+			expect(payload.organization).toBe('Example Co');
+			await route.fulfill({ json: { data: { rsvpToken: 'manage' } } });
+		} else {
+			await route.fulfill({ json: { data: { event: { ...event, contactRequirement: 'email_or_phone' }, invite, questions: [] } } });
+		}
+	});
+	await page.goto('/i/test');
+	await expect(page.locator('.go-cover-host strong')).toBeVisible();
+	await expect(page.locator('#rsvp-email')).toBeVisible();
+	await expect(page.locator('#rsvp-phone')).toBeVisible();
+	await expect(page.locator('#rsvp-email')).toHaveAttribute('required', '');
+	await expect(page.locator('#rsvp-phone')).toHaveAttribute('required', '');
+	await page.locator('#rsvp-name').fill('Rina');
+	await page.locator('#rsvp-organization').fill('Example Co');
+	await page.locator('#rsvp-email').fill('rina@example.com');
+	await expect(page.locator('#rsvp-phone')).not.toHaveAttribute('required', '');
+	await page.locator('#rsvp-email').fill('');
+	await expect(page.locator('#rsvp-phone')).toHaveAttribute('required', '');
+	await page.locator('#rsvp-phone').fill('+1 415 555 2671');
+	await expect(page.locator('#rsvp-email')).not.toHaveAttribute('required', '');
+	await page.getByRole('button', { name: 'KIRIM RSVP', exact: true }).click();
+	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
+});
+
+test('optional organization field is hidden when the event setting is off', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event: { ...event, collectOrganization: false }, invite, questions: []
+	} } }));
+	await page.goto('/i/test');
+	await expect(page.locator('.go-cover-host strong')).toBeVisible();
+	await expect(page.locator('#rsvp-organization')).toHaveCount(0);
+});
+
+test('Grand Opening does not show the public attendance list', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, invite, questions: [], attendance: { headcount: 3, names: ['Guest One', 'Guest Two'] }
+	} } }));
+	await page.goto('/i/test');
+	await expect(page.getByText('Guest One')).toHaveCount(0);
+	await expect(page.getByText('3 people attending')).toHaveCount(0);
+});
+
+test('below-cover content is static with no scroll reveal effects', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.emulateMedia({ reducedMotion: 'no-preference' });
 	await page.goto('/i/test?to=Rina%20Pratama');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
-	const article = page.locator('.grand-opening-invite');
 	const photo = page.locator('.go-building-photo');
-	await expect.poll(() => article.evaluate(el => el.classList.contains('go-reveal-ready'))).toBe(true);
-	await expect.poll(() => photo.evaluate(el => el.classList.contains('go-revealed'))).toBe(false);
-	await expect.poll(() => photo.evaluate(el => getComputedStyle(el).clipPath)).toContain('42%');
+	await expect(page.locator('.grand-opening-invite')).not.toHaveClass(/go-reveal-ready/);
+	await expect(photo).not.toHaveClass(/go-revealed/);
+	await expect(photo).toHaveCSS('clip-path', 'none');
 	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
 	await photo.scrollIntoViewIfNeeded();
-	await expect.poll(() => photo.evaluate(el => el.classList.contains('go-revealed'))).toBe(true);
-	await expect.poll(() => photo.evaluate(el => getComputedStyle(el).clipPath)).not.toContain('42%');
+	await expect(photo).toHaveCSS('transform', 'none');
 	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
 });
 
-test('below-cover reveals remain visible when IntersectionObserver is unavailable', async ({ page }) => {
+test('below-cover content is unaffected when IntersectionObserver is unavailable', async ({ page }) => {
 	await page.addInitScript(() => { Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: undefined }); });
 	await page.emulateMedia({ reducedMotion: 'no-preference' });
 	await page.goto('/i/test?to=Rina%20Pratama');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
-	const article = page.locator('.grand-opening-invite');
 	const photo = page.locator('.go-building-photo');
-	await expect.poll(() => article.evaluate(el => el.classList.contains('go-reveal-ready'))).toBe(false);
+	await expect(page.locator('.grand-opening-invite')).not.toHaveClass(/go-reveal-ready/);
 	await expect(photo.locator('img')).toHaveCSS('opacity', '1');
 	await expect(photo).toHaveCSS('clip-path', 'none');
 	await expect(page.locator('#rsvp-form')).toHaveCount(1);
+});
+
+test('Grand Opening guestbook uses the clean branded layout', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event: { ...event, commentsEnabled: true }, invite, questions
+	} } }));
+	await page.route('**/api/v1/comments/public/test?**', route => route.fulfill({ json: { data: {
+		comments: [{ id: 'comment-1', authorName: 'Guest', body: 'Looking forward to it!', createdAt: '2026-10-01T00:00:00Z' }],
+		hasMore: false
+	} } }));
+	await page.goto('/i/test');
+	const guestbook = page.locator('.go-guestbook');
+	await expect(guestbook.getByRole('heading', { name: 'Guestbook' })).toBeVisible();
+	await expect(guestbook).toContainText('Looking forward to it!');
+	await expect(guestbook.locator('.go-guestbook-panel')).toHaveCSS('box-shadow', 'none');
+	await expect(guestbook.locator('.go-guestbook-panel')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
 test('mobile map CTA stays above the office photo and the cover is full bleed', async ({ page }) => {
@@ -114,8 +181,8 @@ test('mobile map CTA stays above the office photo and the cover is full bleed', 
 	const mapCard = page.locator('.go-map-card');
 	const mapButton = page.locator('.go-map-link');
 	await mapButton.scrollIntoViewIfNeeded();
-	await expect.poll(() => mapCard.evaluate(el => el.classList.contains('go-revealed'))).toBe(true);
-	await expect(mapCard).toHaveCSS('clip-path', 'inset(0px)');
+	await expect(mapCard).not.toHaveClass(/go-revealed/);
+	await expect(mapCard).toHaveCSS('clip-path', 'none');
 	await expect(mapButton).toBeVisible();
 	const hit = await mapButton.evaluate(el => {
 		const box = el.getBoundingClientRect();
@@ -233,17 +300,21 @@ test('manage link personalizes and updates existing response', async ({ page }) 
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Existing Guest', { timeout: 15000 });
 	await expect(page.locator('.go-response')).toContainText('Your RSVP');
 	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await expect(page.locator('#edit-organization')).toHaveValue('Kasir Pintar');
+	await page.locator('#edit-organization').fill('Kasir Pintar East');
 	await page.locator('input[value="declined"]').check({ force: true });
 	await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
 	await expect(page.locator('.go-response')).toContainText('Declined');
+	await expect(page.locator('.go-response')).toContainText('Kasir Pintar East');
 });
 
 test('legacy template retains standalone RSVP', async ({ page }) => {
 	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({
-		json: { data: { event, invite: { ...invite, templateId: 'balloon-party' }, questions: [] } }
+		json: { data: { event: { ...event, collectOrganization: false }, invite: { ...invite, templateId: 'balloon-party' }, questions: [] } }
 	}));
 	await page.goto('/i/test');
 	await expect(page.locator('.invite-card')).toBeVisible({ timeout: 15000 });
 	await expect(page.locator('.grand-opening-invite')).toHaveCount(0);
 	await expect(page.locator('#rsvp-name')).toBeVisible();
+	await expect(page.locator('#rsvp-organization')).toHaveCount(0);
 });

@@ -7,6 +7,7 @@ type Attendee struct {
 	ID            string    `json:"id"`
 	EventID       string    `json:"eventId"`
 	Name          string    `json:"name"`
+	Organization  string    `json:"organization,omitempty"`
 	Email         *string   `json:"email,omitempty"`
 	Phone         *string   `json:"phone,omitempty"`
 	RSVPStatus    string    `json:"rsvpStatus"`
@@ -22,6 +23,7 @@ type Attendee struct {
 // RSVPRequest is the request body for submitting a new RSVP.
 type RSVPRequest struct {
 	Name          string            `json:"name"`
+	Organization  string            `json:"organization,omitempty"`
 	Email         *string           `json:"email,omitempty"`
 	Phone         *string           `json:"phone,omitempty"`
 	RSVPStatus    string            `json:"rsvpStatus"`
@@ -47,6 +49,7 @@ type RSVPStats struct {
 // UpdateRSVPRequest is the request body for updating an existing RSVP.
 type UpdateRSVPRequest struct {
 	Name         *string           `json:"name,omitempty"`
+	Organization *string           `json:"organization,omitempty"`
 	RSVPStatus   *string           `json:"rsvpStatus,omitempty"`
 	DietaryNotes *string           `json:"dietaryNotes,omitempty"`
 	PlusOnes     *int              `json:"plusOnes,omitempty"`
@@ -57,6 +60,7 @@ type UpdateRSVPRequest struct {
 // any attendee's RSVP, including contact fields that attendees cannot change.
 type OrganizerUpdateAttendeeRequest struct {
 	Name         *string `json:"name,omitempty"`
+	Organization *string `json:"organization,omitempty"`
 	Email        *string `json:"email,omitempty"`
 	Phone        *string `json:"phone,omitempty"`
 	RSVPStatus   *string `json:"rsvpStatus,omitempty"`

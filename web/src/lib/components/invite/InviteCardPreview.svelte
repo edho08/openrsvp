@@ -1,6 +1,17 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { EventQuestion } from '$lib/types';
 	import GrandOpeningInvite from './GrandOpeningInvite.svelte';
+
+	interface RsvpPreviewModel {
+		collectOrganization: boolean;
+		emailRequired: boolean;
+		phoneRequired: boolean;
+		showEmail: boolean;
+		showPhone: boolean;
+		contactChoiceRequired: boolean;
+		questions: EventQuestion[];
+	}
 
 	interface Props {
 		rsvpContent?: Snippet;
@@ -19,6 +30,7 @@
 		customData?: string | Record<string, unknown>;
 		timezone?: string;
 		recipientName?: string;
+		rsvpPreview?: RsvpPreviewModel;
 	}
 
 	let {
@@ -37,7 +49,8 @@
 		eventLocation,
 		customData = '{}',
 		timezone,
-		recipientName = ''
+		recipientName = '',
+		rsvpPreview
 	}: Props = $props();
 
 	const parsedCustomData = $derived.by(() => {
@@ -218,6 +231,7 @@
 		{timezone}
 		customData={parsedCustomData}
 		recipientName={recipientName || (typeof parsedCustomData.recipientName === 'string' ? parsedCustomData.recipientName : '')}
+		{rsvpPreview}
 	/>
 {:else}
 	<div

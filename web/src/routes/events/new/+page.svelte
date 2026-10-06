@@ -34,6 +34,7 @@
 	// Step 2 fields
 	let description = $state('');
 	let contactRequirement = $state('email');
+	let collectOrganization = $state(false);
 	let showHeadcount = $state(false);
 	let showGuestList = $state(false);
 	let rsvpDeadline = $state('');
@@ -113,6 +114,7 @@
 				timezone,
 				description: description.trim(),
 				contactRequirement,
+				collectOrganization,
 				showHeadcount,
 				showGuestList,
 				retentionDays: parseInt(retentionDays)
@@ -238,6 +240,19 @@
 						bind:value={contactRequirement}
 						options={filteredContactOptions}
 					/>
+
+					<label for="collect-organization" class="flex items-start gap-3 cursor-pointer">
+						<input
+							id="collect-organization"
+							type="checkbox"
+							bind:checked={collectOrganization}
+							class="mt-0.5 rounded border-neutral-300 text-primary focus:ring-primary/40"
+						/>
+						<span>
+							<span class="block text-sm font-medium text-neutral-700">Ask guests for Instansi / Perusahaan (optional)</span>
+							<span class="mt-1 block text-xs text-neutral-500">Adds an optional organization field to the RSVP form. Existing RSVP data is kept if you turn this off later.</span>
+						</span>
+					</label>
 
 					<fieldset class="pt-2">
 						<legend class="text-sm font-medium text-neutral-700 mb-3">Guest Visibility</legend>

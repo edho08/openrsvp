@@ -197,26 +197,28 @@ func (s *Service) Create(ctx context.Context, organizerID string, req CreateEven
 	if req.CommentsEnabled != nil {
 		commentsEnabled = *req.CommentsEnabled
 	}
+	collectOrganization := req.CollectOrganization != nil && *req.CollectOrganization
 
 	e := &Event{
-		ID:                 uuid.Must(uuid.NewV7()).String(),
-		OrganizerID:        organizerID,
-		Title:              req.Title,
-		Description:        req.Description,
-		EventDate:          eventDate,
-		EndDate:            endDate,
-		Location:           req.Location,
-		Timezone:           req.Timezone,
-		RetentionDays:      retentionDays,
-		ContactRequirement: contactRequirement,
-		ShowHeadcount:      showHeadcount,
-		ShowGuestList:      showGuestList,
-		RSVPDeadline:       rsvpDeadline,
-		MaxCapacity:        maxCapacity,
-		WaitlistEnabled:    waitlistEnabled,
-		CommentsEnabled:    commentsEnabled,
-		Status:             "draft",
-		ShareToken:         shareToken,
+		ID:                  uuid.Must(uuid.NewV7()).String(),
+		OrganizerID:         organizerID,
+		Title:               req.Title,
+		Description:         req.Description,
+		EventDate:           eventDate,
+		EndDate:             endDate,
+		Location:            req.Location,
+		Timezone:            req.Timezone,
+		RetentionDays:       retentionDays,
+		ContactRequirement:  contactRequirement,
+		ShowHeadcount:       showHeadcount,
+		ShowGuestList:       showGuestList,
+		CollectOrganization: collectOrganization,
+		RSVPDeadline:        rsvpDeadline,
+		MaxCapacity:         maxCapacity,
+		WaitlistEnabled:     waitlistEnabled,
+		CommentsEnabled:     commentsEnabled,
+		Status:              "draft",
+		ShareToken:          shareToken,
 	}
 
 	if err := s.store.Create(ctx, e); err != nil {
@@ -382,6 +384,9 @@ func (s *Service) Update(ctx context.Context, eventID, organizerID string, req U
 	}
 	if req.ShowGuestList != nil {
 		e.ShowGuestList = *req.ShowGuestList
+	}
+	if req.CollectOrganization != nil {
+		e.CollectOrganization = *req.CollectOrganization
 	}
 	if req.RSVPDeadline != nil {
 		if *req.RSVPDeadline == "" {

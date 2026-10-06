@@ -24,9 +24,9 @@ func (s *Store) Create(ctx context.Context, a *Attendee) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO attendees (id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		a.ID, a.EventID, a.Name, a.Email, a.Phone, a.RSVPStatus,
+		`INSERT INTO attendees (id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		a.ID, a.EventID, a.Name, a.Organization, a.Email, a.Phone, a.RSVPStatus,
 		a.RSVPToken, a.ContactMethod, a.DietaryNotes, a.PlusOnes, a.ImportSource, now, now,
 	)
 	if err != nil {
@@ -43,7 +43,7 @@ func (s *Store) Create(ctx context.Context, a *Attendee) error {
 // FindByID retrieves an attendee by ID.
 func (s *Store) FindByID(ctx context.Context, id string) (*Attendee, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees WHERE id = ?`, id,
 	)
 	return scanAttendee(row)
@@ -52,7 +52,7 @@ func (s *Store) FindByID(ctx context.Context, id string) (*Attendee, error) {
 // FindByRSVPToken retrieves an attendee by their unique RSVP token.
 func (s *Store) FindByRSVPToken(ctx context.Context, token string) (*Attendee, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees WHERE rsvp_token = ?`, token,
 	)
 	return scanAttendee(row)
@@ -61,7 +61,7 @@ func (s *Store) FindByRSVPToken(ctx context.Context, token string) (*Attendee, e
 // FindByEventID retrieves all attendees for a given event.
 func (s *Store) FindByEventID(ctx context.Context, eventID string) ([]*Attendee, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees WHERE event_id = ? ORDER BY created_at DESC`, eventID,
 	)
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *Store) FindByEventID(ctx context.Context, eventID string) ([]*Attendee,
 // FindByEventAndEmail retrieves an attendee by event ID and email address.
 func (s *Store) FindByEventAndEmail(ctx context.Context, eventID, email string) (*Attendee, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees WHERE event_id = ? AND email = ?`, eventID, email,
 	)
 	return scanAttendee(row)
@@ -96,7 +96,7 @@ func (s *Store) FindByEventAndEmail(ctx context.Context, eventID, email string) 
 // FindByEventAndPhone retrieves an attendee by event ID and phone number.
 func (s *Store) FindByEventAndPhone(ctx context.Context, eventID, phone string) (*Attendee, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token, contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees WHERE event_id = ? AND phone = ?`, eventID, phone,
 	)
 	return scanAttendee(row)
@@ -107,9 +107,9 @@ func (s *Store) Update(ctx context.Context, a *Attendee) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	_, err := s.db.ExecContext(ctx,
-		`UPDATE attendees SET name = ?, email = ?, phone = ?, rsvp_status = ?, contact_method = ?, dietary_notes = ?, plus_ones = ?, updated_at = ?
+		`UPDATE attendees SET name = ?, organization = ?, email = ?, phone = ?, rsvp_status = ?, contact_method = ?, dietary_notes = ?, plus_ones = ?, updated_at = ?
 		 WHERE id = ?`,
-		a.Name, a.Email, a.Phone, a.RSVPStatus, a.ContactMethod, a.DietaryNotes, a.PlusOnes, now, a.ID,
+		a.Name, a.Organization, a.Email, a.Phone, a.RSVPStatus, a.ContactMethod, a.DietaryNotes, a.PlusOnes, now, a.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("update attendee: %w", err)
@@ -213,7 +213,7 @@ func (s *Store) GetPublicAttendance(ctx context.Context, eventID string) (int, [
 // FindFirstWaitlisted retrieves the earliest waitlisted attendee for an event.
 func (s *Store) FindFirstWaitlisted(ctx context.Context, eventID string) (*Attendee, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, event_id, name, email, phone, rsvp_status, rsvp_token,
+		`SELECT id, event_id, name, organization, email, phone, rsvp_status, rsvp_token,
 				contact_method, dietary_notes, plus_ones, import_source, created_at, updated_at
 		 FROM attendees
 		 WHERE event_id = ? AND rsvp_status = 'waitlisted'
@@ -242,11 +242,11 @@ func (s *Store) GetWaitlistPosition(ctx context.Context, eventID, attendeeID str
 // scanAttendee scans a single sql.Row into an Attendee.
 func scanAttendee(row *sql.Row) (*Attendee, error) {
 	var a Attendee
-	var email, phone, importSource sql.NullString
+	var organization, email, phone, importSource sql.NullString
 	var createdAt, updatedAt string
 
 	err := row.Scan(
-		&a.ID, &a.EventID, &a.Name, &email, &phone,
+		&a.ID, &a.EventID, &a.Name, &organization, &email, &phone,
 		&a.RSVPStatus, &a.RSVPToken, &a.ContactMethod,
 		&a.DietaryNotes, &a.PlusOnes, &importSource, &createdAt, &updatedAt,
 	)
@@ -257,17 +257,17 @@ func scanAttendee(row *sql.Row) (*Attendee, error) {
 		return nil, fmt.Errorf("scan attendee: %w", err)
 	}
 
-	return parseAttendeeTimes(&a, email, phone, importSource, createdAt, updatedAt)
+	return parseAttendeeTimes(&a, organization, email, phone, importSource, createdAt, updatedAt)
 }
 
 // scanAttendeeRow scans a single row from sql.Rows into an Attendee.
 func scanAttendeeRow(rows *sql.Rows) (*Attendee, error) {
 	var a Attendee
-	var email, phone, importSource sql.NullString
+	var organization, email, phone, importSource sql.NullString
 	var createdAt, updatedAt string
 
 	err := rows.Scan(
-		&a.ID, &a.EventID, &a.Name, &email, &phone,
+		&a.ID, &a.EventID, &a.Name, &organization, &email, &phone,
 		&a.RSVPStatus, &a.RSVPToken, &a.ContactMethod,
 		&a.DietaryNotes, &a.PlusOnes, &importSource, &createdAt, &updatedAt,
 	)
@@ -275,11 +275,14 @@ func scanAttendeeRow(rows *sql.Rows) (*Attendee, error) {
 		return nil, fmt.Errorf("scan attendee row: %w", err)
 	}
 
-	return parseAttendeeTimes(&a, email, phone, importSource, createdAt, updatedAt)
+	return parseAttendeeTimes(&a, organization, email, phone, importSource, createdAt, updatedAt)
 }
 
 // parseAttendeeTimes parses nullable strings and RFC3339 timestamps into an Attendee.
-func parseAttendeeTimes(a *Attendee, email, phone, importSource sql.NullString, createdAt, updatedAt string) (*Attendee, error) {
+func parseAttendeeTimes(a *Attendee, organization, email, phone, importSource sql.NullString, createdAt, updatedAt string) (*Attendee, error) {
+	if organization.Valid {
+		a.Organization = organization.String
+	}
 	if email.Valid {
 		a.Email = &email.String
 	}

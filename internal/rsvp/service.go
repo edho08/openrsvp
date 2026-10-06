@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"hash/fnv"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,6 +26,7 @@ const base62Chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW
 // Field length limits.
 const (
 	maxNameLen         = 200
+	maxOrganizationLen = 200
 	maxEmailLen        = 254 // RFC 5321
 	maxPhoneLen        = 20
 	maxDietaryNotesLen = 500
@@ -305,6 +307,9 @@ func (s *Service) SubmitRSVP(ctx context.Context, shareToken string, req RSVPReq
 	if len(req.Name) > maxNameLen {
 		return nil, validationErrorf("name must be %d characters or less", maxNameLen)
 	}
+	if len(req.Organization) > maxOrganizationLen {
+		return nil, validationErrorf("organization must be %d characters or less", maxOrganizationLen)
+	}
 	if req.Email != nil && *req.Email != "" && len(*req.Email) > maxEmailLen {
 		return nil, validationErrorf("email must be %d characters or less", maxEmailLen)
 	}
@@ -342,7 +347,11 @@ func (s *Service) SubmitRSVP(ctx context.Context, shareToken string, req RSVPReq
 		return nil, validationErrorf("plusOnes must be %d or less", maxPlusOnes)
 	}
 	if req.ContactMethod == "" {
-		req.ContactMethod = "email"
+		if s.smsEnabled && (req.Email == nil || *req.Email == "") && req.Phone != nil && *req.Phone != "" {
+			req.ContactMethod = "sms"
+		} else {
+			req.ContactMethod = "email"
+		}
 	}
 	if req.ContactMethod != "email" && req.ContactMethod != "sms" {
 		return nil, validationErrorf("invalid contactMethod: must be email or sms")
@@ -474,6 +483,7 @@ func (s *Service) SubmitRSVP(ctx context.Context, shareToken string, req RSVPReq
 		ID:            uuid.Must(uuid.NewV7()).String(),
 		EventID:       ev.ID,
 		Name:          req.Name,
+		Organization:  strings.TrimSpace(req.Organization),
 		Email:         req.Email,
 		Phone:         req.Phone,
 		RSVPStatus:    req.RSVPStatus,
@@ -716,6 +726,9 @@ func (s *Service) UpdateByToken(ctx context.Context, rsvpToken string, req Updat
 			return nil, validationErrorf("name must be %d characters or less", maxNameLen)
 		}
 	}
+	if req.Organization != nil && len(strings.TrimSpace(*req.Organization)) > maxOrganizationLen {
+		return nil, validationErrorf("organization must be %d characters or less", maxOrganizationLen)
+	}
 	if req.DietaryNotes != nil && len(*req.DietaryNotes) > maxDietaryNotesLen {
 		return nil, validationErrorf("dietaryNotes must be %d characters or less", maxDietaryNotesLen)
 	}
@@ -728,6 +741,9 @@ func (s *Service) UpdateByToken(ctx context.Context, rsvpToken string, req Updat
 
 	if req.Name != nil {
 		a.Name = *req.Name
+	}
+	if req.Organization != nil {
+		a.Organization = strings.TrimSpace(*req.Organization)
 	}
 	if req.RSVPStatus != nil {
 		// Validation already done above — only attending/maybe/declined allowed,
@@ -903,6 +919,9 @@ func (s *Service) UpdateAttendeeAsOrganizer(ctx context.Context, eventID, attend
 			return nil, validationErrorf("name must be %d characters or less", maxNameLen)
 		}
 	}
+	if req.Organization != nil && len(strings.TrimSpace(*req.Organization)) > maxOrganizationLen {
+		return nil, validationErrorf("organization must be %d characters or less", maxOrganizationLen)
+	}
 	if req.Email != nil && *req.Email != "" {
 		if len(*req.Email) > maxEmailLen {
 			return nil, validationErrorf("email must be %d characters or less", maxEmailLen)
@@ -942,6 +961,9 @@ func (s *Service) UpdateAttendeeAsOrganizer(ctx context.Context, eventID, attend
 
 	if req.Name != nil {
 		a.Name = *req.Name
+	}
+	if req.Organization != nil {
+		a.Organization = strings.TrimSpace(*req.Organization)
 	}
 	if req.Email != nil {
 		a.Email = req.Email

@@ -1,6 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
+	import type { EventQuestion } from '$lib/types';
+
+	interface RsvpPreviewModel {
+		collectOrganization: boolean;
+		emailRequired: boolean;
+		phoneRequired: boolean;
+		showEmail: boolean;
+		showPhone: boolean;
+		contactChoiceRequired: boolean;
+		questions: EventQuestion[];
+	}
 
 	interface Props {
 		rsvpContent?: Snippet;
@@ -18,10 +29,12 @@
 		timezone?: string;
 		customData?: string | Record<string, unknown>;
 		recipientName?: string;
+		rsvpPreview?: RsvpPreviewModel;
 	}
 	let { rsvpContent, heading, body, footer, primaryColor, secondaryColor,
 		font, eventTitle, eventDescription = '', eventDate, endDate, eventLocation,
-		timezone, customData = '{}', recipientName = '' }: Props = $props();
+		timezone, customData = '{}', recipientName = '',
+		rsvpPreview = { collectOrganization: false, emailRequired: true, phoneRequired: false, showEmail: true, showPhone: false, contactChoiceRequired: false, questions: [] } }: Props = $props();
 
 	const asset = (name: string) => `/invite/grand-opening/${name}.webp`;
 	const data = $derived.by((): Record<string, unknown> => {
@@ -94,7 +107,6 @@
 	]);
 	let failedImages = $state<string[]>([]);
 	function fail(url: string) { if (!failedImages.includes(url)) failedImages = [...failedImages, url]; }
-	let inviteRoot: HTMLElement;
 	let coverScene: HTMLElement;
 	let openProgress = $state(0);
 	onMount(() => {
@@ -118,42 +130,12 @@
 		window.addEventListener('scroll', update, { passive: true });
 		window.addEventListener('resize', update, { passive: true });
 		reducedMotion.addEventListener('change', update);
-		let revealObserver: IntersectionObserver | undefined;
-		if ('IntersectionObserver' in window) {
-			const revealTargets = inviteRoot.querySelectorAll<HTMLElement>('.go-reveal-image, .go-reveal-rise');
-			if (revealTargets.length) {
-				const revealByTrigger = new Map<Element, HTMLElement[]>();
-				for (const target of revealTargets) {
-					const bounds = target.getBoundingClientRect();
-					const trigger = bounds.width === 0 || bounds.height === 0
-						? target.closest('section, footer') || target
-						: target;
-					const group = revealByTrigger.get(trigger) || [];
-					group.push(target);
-					revealByTrigger.set(trigger, group);
-				}
-				revealObserver = new IntersectionObserver(entries => {
-					for (const entry of entries) {
-						if (entry.isIntersecting) {
-							for (const target of revealByTrigger.get(entry.target) || []) {
-								target.classList.add('go-revealed');
-							}
-							revealObserver?.unobserve(entry.target);
-						}
-					}
-				}, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
-				inviteRoot.classList.add('go-reveal-ready');
-				revealByTrigger.forEach((_, trigger) => revealObserver?.observe(trigger));
-			}
-		}
 		update();
 		return () => {
 			window.removeEventListener('scroll', update);
 			window.removeEventListener('resize', update);
 			reducedMotion.removeEventListener('change', update);
 			cancelAnimationFrame(frame);
-			revealObserver?.disconnect();
-			inviteRoot.classList.remove('go-reveal-ready');
 		};
 	});
 </script>
@@ -162,7 +144,7 @@
 	<img src={failedImages.includes(url) ? asset(fallback) : url} alt={label} loading="lazy" onerror={() => fail(url)} />
 {/snippet}
 
-<article class="grand-opening-invite" bind:this={inviteRoot} aria-label={eventTitle || `${brandName} Grand Opening invitation`}
+<article class="grand-opening-invite" aria-label={eventTitle || `${brandName} Grand Opening invitation`}
 	style="--go-primary: {color(primaryColor, '#10a37b')}; --go-secondary: {color(secondaryColor, '#0f926c')}; --go-font: {bodyFont};">
 	<section class="go-cover" bind:this={coverScene} aria-labelledby="go-cover-title"
 		style="--go-open-progress: {openProgress}; --go-gate-lift: {openProgress * -130}cqw; --go-envelope-drop: {openProgress * 90 + openProgress * openProgress * 100}cqw; --go-letter-rise: {openProgress * -60}cqw;">
@@ -191,62 +173,84 @@
 	</section>
 
 	<section class="go-invitation" aria-labelledby="go-invitation-title">
-		<h2 id="go-invitation-title" class="go-reveal-rise"><img src={asset('invitation-title')} alt="Undangan" loading="lazy" /></h2>
-		<div class="go-invitation-copy go-reveal-rise"><p><strong>Dengan penuh sukacita,</strong></p><p>{intro}</p></div>
-		<div class="go-building-photo go-reveal-image" class:go-building-placeholder={failedImages.includes(buildingImage)}>{@render photo(buildingImage, 'office-front', venueName)}</div>
-		<p class="go-photo-caption go-reveal-rise">Tentang energi baru untuk terus melangkah<br />lebih jauh bersama UMKM Indonesia</p>
+		<h2 id="go-invitation-title"><img src={asset('invitation-title')} alt="Undangan" loading="lazy" /></h2>
+		<div class="go-invitation-copy"><p><strong>Dengan penuh sukacita,</strong></p><p>{intro}</p></div>
+		<div class="go-building-photo" class:go-building-placeholder={failedImages.includes(buildingImage)}>{@render photo(buildingImage, 'office-front', venueName)}</div>
+		<p class="go-photo-caption">Tentang energi baru untuk terus melangkah<br />lebih jauh bersama UMKM Indonesia</p>
 	</section>
 
 	<section class="go-journey" aria-labelledby="go-journey-title">
-		<p class="go-section-kicker go-reveal-rise">OUR JOURNEY</p>
-		<h2 id="go-journey-title" class="go-reveal-rise">{storyTitle}</h2>
-		<div class="go-video-panel go-reveal-rise">
+		<p class="go-section-kicker">OUR JOURNEY</p>
+		<h2 id="go-journey-title">{storyTitle}</h2>
+		<div class="go-video-panel">
 			{#if videoURL}
-				<a class="go-video-card go-reveal-image" href={videoURL} target="_blank" rel="noopener noreferrer" aria-label="Open {text(data.videoTitle, 'Perjalanan Kasir Pintar')}">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</a>
-			{:else}<div class="go-video-card go-reveal-image" aria-label="Video preview; video link not yet supplied">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</div>{/if}
+				<a class="go-video-card" href={videoURL} target="_blank" rel="noopener noreferrer" aria-label="Open {text(data.videoTitle, 'Perjalanan Kasir Pintar')}">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</a>
+			{:else}<div class="go-video-card" aria-label="Video preview; video link not yet supplied">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</div>{/if}
 			<p>{#if videoCaption === 'Terus berusaha tumbuh bersama UMKM Indonesia'}Terus berusaha <strong>tumbuh bersama</strong><br />UMKM Indonesia{:else}{videoCaption}{/if}</p>
 		</div>
 	</section>
 
 	<section class="go-chapter" aria-labelledby="go-chapter-title">
-		<div class="go-interior-photo go-reveal-image">{@render photo(interiorImage, 'office-meeting', `${venueName} ruang rapat`)}</div>
-		<div class="go-chapter-content go-reveal-rise"><h2 id="go-chapter-title">{chapterTitle}</h2><p>{chapterBody}</p>
-			<div class="go-value-grid">{#each values as value, index}<div class="go-value-card go-reveal-rise" style="--go-reveal-delay: {index * 75}ms"><img src={asset(valueIcons[index])} alt="" loading="lazy" /><span>{#if value === valueDefaults[index]}{value.slice(0, -valueEmphasis[index].length)}<strong>{valueEmphasis[index]}</strong>{:else}{value}{/if}</span></div>{/each}</div>
+		<div class="go-interior-photo">{@render photo(interiorImage, 'office-meeting', `${venueName} ruang rapat`)}</div>
+		<div class="go-chapter-content"><h2 id="go-chapter-title">{chapterTitle}</h2><p>{chapterBody}</p>
+			<div class="go-value-grid">{#each values as value, index}<div class="go-value-card"><img src={asset(valueIcons[index])} alt="" loading="lazy" /><span>{#if value === valueDefaults[index]}{value.slice(0, -valueEmphasis[index].length)}<strong>{valueEmphasis[index]}</strong>{:else}{value}{/if}</span></div>{/each}</div>
 		</div>
 	</section>
 
 	<section class="go-details" aria-labelledby="go-details-title">
-		<div class="go-office-photo go-reveal-image">{@render photo(workspaceImage, 'office-workspace', `${venueName} ruang kerja`)}</div>
-		<h2 id="go-details-title" class="go-reveal-rise">Detail Acara</h2>
+		<div class="go-office-photo">{@render photo(workspaceImage, 'office-workspace', `${venueName} ruang kerja`)}</div>
+		<h2 id="go-details-title">Detail Acara</h2>
 		<div class="go-detail-list">
-			<div class="go-detail-row go-reveal-rise" style="--go-reveal-delay: 0ms"><img src={asset('detail-calendar')} alt="" loading="lazy" /><p><strong>{weekday}</strong><span>{fullDate}</span></p></div>
-			<div class="go-detail-row go-reveal-rise" style="--go-reveal-delay: 75ms"><img src={asset('detail-clock')} alt="" loading="lazy" /><p><strong>{time} {zone}</strong><span>– {endTime}</span></p></div>
-			<div class="go-detail-row go-reveal-rise" style="--go-reveal-delay: 150ms"><img src={asset('detail-location')} alt="" loading="lazy" /><p><strong>{venueName}</strong><span>{mapsLabel}</span></p></div>
+			<div class="go-detail-row"><img src={asset('detail-calendar')} alt="" loading="lazy" /><p><strong>{weekday}</strong><span>{fullDate}</span></p></div>
+			<div class="go-detail-row"><img src={asset('detail-clock')} alt="" loading="lazy" /><p><strong>{time} {zone}</strong><span>– {endTime}</span></p></div>
+			<div class="go-detail-row"><img src={asset('detail-location')} alt="" loading="lazy" /><p><strong>{venueName}</strong><span>{mapsLabel}</span></p></div>
 		</div>
-		<a class="go-map-card go-reveal-image" href={mapURL} target="_blank" rel="noopener noreferrer" aria-label="Open event location in Google Maps">
+		<a class="go-map-card" href={mapURL} target="_blank" rel="noopener noreferrer" aria-label="Open event location in Google Maps">
 			<div class="go-map-image">{@render photo(mapImage, 'maps-preview', 'Lokasi kantor di Manyar Kartika III, Surabaya')}</div>
 			<span class="go-map-link">Lihat Lokasi di Google Maps</span>
 		</a>
 	</section>
 
 	<section class="go-rsvp-section" aria-labelledby="go-rsvp-title">
-		<p class="go-section-kicker go-reveal-rise">RSVP</p><h2 id="go-rsvp-title" class="go-reveal-rise">Konfirmasi<br />Kehadiran Anda</h2>
-		<section id="rsvp-form" class="go-response go-reveal-rise" aria-label="RSVP">
-			{#if rsvpContent}{@render rsvpContent()}{:else}<div class="go-form-preview"><label>Nama Lengkap *<input disabled /></label><label>Instansi / Perusahaan<input disabled /></label><p>Konfirmasi Kehadiran *</p><p class="go-preview-option">◯ &nbsp; Ya, Saya Akan hadir</p><p class="go-preview-option">◯ &nbsp; Maaf, Saya Tidak Bisa Hadir</p><button disabled>KIRIM RSVP</button></div>{/if}
+		<p class="go-section-kicker">RSVP</p><h2 id="go-rsvp-title">Konfirmasi<br />Kehadiran Anda</h2>
+		<section id="rsvp-form" class="go-response" aria-label="RSVP">
+			{#if rsvpContent}
+				{@render rsvpContent()}
+			{:else}
+				<div class="go-form-preview">
+					<label>Nama Lengkap *<input disabled /></label>
+					{#if rsvpPreview.collectOrganization}<label>Instansi / Perusahaan (optional)<input disabled placeholder="Company or organization" /></label>{/if}
+					{#each rsvpPreview.questions as question (question.id)}
+						<div class="go-preview-question">
+							<p class="go-preview-question-label">{question.label}{question.required ? ' *' : ''}</p>
+							{#if question.type === 'text'}<input disabled placeholder="Your answer" />
+							{:else}{#each question.options as option}<p class="go-preview-option">{question.type === 'checkbox' ? '□' : '◯'} &nbsp; {option}</p>{/each}{/if}
+						</div>
+					{/each}
+					{#if rsvpPreview.showEmail}<label>Email Address {rsvpPreview.emailRequired ? '*' : '(optional)'}<input type="email" disabled placeholder="you@example.com" /></label>{/if}
+					{#if rsvpPreview.showPhone}<label>Phone Number {rsvpPreview.phoneRequired ? '*' : '(optional)'}<input type="tel" disabled placeholder="+628123456789" /></label>{/if}
+					{#if rsvpPreview.contactChoiceRequired}<p>Provide either an email address or a phone number.</p>{/if}
+					<p>Konfirmasi Kehadiran *</p>
+					<p class="go-preview-option">◯ &nbsp; Ya, Saya Akan Hadir</p>
+					<p class="go-preview-option">◯ &nbsp; Maybe</p>
+					<p class="go-preview-option">◯ &nbsp; Maaf, Saya Tidak Bisa Hadir</p>
+					<button disabled>KIRIM RSVP</button>
+				</div>
+			{/if}
 		</section>
 	</section>
 
 	<footer class="go-footer">
 		<div class="go-footer-logo">{#if brandName === 'Kasir Pintar'}<img src={asset('brand-logo')} alt="Kasir Pintar" loading="lazy" />{:else}{brandName}{/if}</div>
-		<h2 class="go-see-you go-reveal-rise"><img src={asset('closing-title')} alt="See You at Our New Office" loading="lazy" /></h2>
-		<p class="go-closing-copy go-reveal-rise">{closingBody}</p>
+		<h2 class="go-see-you"><img src={asset('closing-title')} alt="See You at Our New Office" loading="lazy" /></h2>
+		<p class="go-closing-copy">{closingBody}</p>
 		<nav class="go-socials" aria-label="Media sosial Kasir Pintar">
 			{#each socials as social}
 				<a href={social.url} target="_blank" rel="noopener noreferrer" aria-label="Kasir Pintar di {social.name}"><img src={asset(social.icon)} alt="" loading="lazy" /></a>
 			{/each}
 		</nav>
 		<a class="go-website" href="https://kasirpintar.co.id/" target="_blank" rel="noopener noreferrer">www.<strong>kasirpintar</strong>.co.id</a>
-		<div class="go-footer-photo go-reveal-image">{@render photo(footerImage, 'office-closing', `${venueName} tampak depan`)}</div>
+		<div class="go-footer-photo">{@render photo(footerImage, 'office-closing', `${venueName} tampak depan`)}</div>
 	</footer>
 </article>
 
@@ -261,13 +265,6 @@
 	a { color: inherit; text-decoration: none; }
 	a:focus-visible { outline: 3px solid #ffbf47; outline-offset: 4px; }
 	section, footer { position: relative; }
-	.go-reveal-image, .go-reveal-rise { transition-delay: var(--go-reveal-delay, 0ms); }
-	:global(.go-reveal-ready .go-reveal-image:not(.go-revealed)) { clip-path: inset(42% 0 42% 0 round 2.5cqw); transform: translate3d(0, 22px, 0) scale(1.04); }
-	:global(.go-reveal-ready .go-reveal-image) { transition: clip-path 850ms cubic-bezier(.2, .75, .25, 1), transform 850ms cubic-bezier(.2, .75, .25, 1); }
-	:global(.go-reveal-ready .go-reveal-image.go-revealed) { clip-path: inset(0); transform: none; }
-	:global(.go-reveal-ready .go-reveal-rise:not(.go-revealed)) { transform: translate3d(0, 18px, 0); }
-	:global(.go-reveal-ready .go-reveal-rise) { transition: transform 650ms cubic-bezier(.2, .75, .25, 1); }
-	:global(.go-reveal-ready .go-reveal-rise.go-revealed) { transform: none; }
 	h2 { font-weight: 700; font-size: 5.9cqw; line-height: 1.18; }
 	.go-cover { height: 177.778cqw; color: #fff; text-align: center; }
 	.go-cover-stage { display: contents; }
@@ -338,6 +335,8 @@
 	.go-response :global(input:focus-visible), .go-response :global(button:focus-visible) { outline: 3px solid #ffbf47; outline-offset: 3px; }
 	.go-form-preview { background: url('/invite/grand-opening/rsvp-panel.webp') center/100% 100% no-repeat; padding: 6cqw 7.5cqw; color: white; border-radius: 3cqw; font-size: 3.2cqw; }
 	.go-form-preview label { display: block; margin-bottom: 6cqw; }
+	.go-preview-question { margin-bottom: 6cqw; }
+	.go-preview-question-label { margin-bottom: 2cqw; }
 	.go-form-preview input { display: block; width: 100%; height: 11cqw; border: 0; border-radius: 3cqw; background: #f7f7f7; margin-top: 2cqw; }
 	.go-preview-option { margin-top: 2cqw; padding: 1.5cqw; background: #f7f7f7; color: #303030; border-radius: 3cqw; }
 	.go-footer { min-height: 159.074cqw; padding-top: 8.4cqw; text-align: center; background: #f7f7f7; }
@@ -371,9 +370,6 @@
 		.go-envelope-body { transform: none; will-change: auto; }
 		.go-envelope-flap { transform: none; will-change: auto; }
 		.go-opening-letter { display: none; }
-	}
-	@media (prefers-reduced-motion: reduce) {
-		:global(.grand-opening-invite.go-reveal-ready .go-reveal-image), :global(.grand-opening-invite.go-reveal-ready .go-reveal-rise) { clip-path: none !important; transform: none !important; transition: none !important; }
 	}
 	@media (prefers-reduced-motion: no-preference) { .go-scroll-cue img { animation: go-scroll 2s ease-in-out infinite; } }
 	@keyframes go-scroll { 50% { transform: translateY(.6cqw); } }

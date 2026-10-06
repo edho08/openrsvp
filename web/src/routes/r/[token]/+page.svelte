@@ -39,6 +39,7 @@
 	// Edit form
 	let editing = $state(false);
 	let editName = $state('');
+	let editOrganization = $state('');
 	let editStatus = $state<'attending' | 'maybe' | 'declined'>('attending');
 	let editDietary = $state('');
 	let editPlusOnes = $state(0);
@@ -109,6 +110,7 @@
 	function populateEditForm() {
 		if (!attendee) return;
 		editName = attendee.name;
+		editOrganization = attendee.organization || '';
 		editStatus = (attendee.rsvpStatus === 'pending' || attendee.rsvpStatus === 'waitlisted') ? 'attending' : attendee.rsvpStatus;
 		editDietary = attendee.dietaryNotes || '';
 		editPlusOnes = attendee.plusOnes;
@@ -128,6 +130,7 @@
 		try {
 			const payload: Record<string, unknown> = {
 				name: editName.trim(),
+				organization: editOrganization.trim(),
 				rsvpStatus: editStatus,
 				dietaryNotes: editDietary.trim() || undefined,
 				plusOnes: editPlusOnes
@@ -434,6 +437,12 @@
 								class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
 							/>
 						</div>
+						{#if eventData?.collectOrganization}
+							<div>
+								<label for="edit-organization" class="block text-sm font-medium text-neutral-700 mb-1.5">Instansi / Perusahaan (optional)</label>
+								<input id="edit-organization" type="text" maxlength="200" bind:value={editOrganization} class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors" />
+							</div>
+						{/if}
 
 						<!-- RSVP Status -->
 						<fieldset>
@@ -551,6 +560,12 @@
 							<span class="text-sm text-neutral-500">Name</span>
 							<span class="text-sm font-medium text-neutral-900">{attendee.name}</span>
 						</div>
+						{#if eventData?.collectOrganization && attendee.organization}
+							<div class="flex items-center justify-between">
+								<span class="text-sm text-neutral-500">Representing</span>
+								<span class="text-sm font-medium text-neutral-900">{attendee.organization}</span>
+							</div>
+						{/if}
 						{#if attendee.email}
 							<div class="flex items-center justify-between">
 								<span class="text-sm text-neutral-500">Email</span>

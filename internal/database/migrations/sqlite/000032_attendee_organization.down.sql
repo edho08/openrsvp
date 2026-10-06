@@ -1,0 +1,2 @@
+-- SQLite column removal is not portable across the project's supported engine versions.
+-- Leave the column in place after rollback; older SQLite engines cannot drop columns.

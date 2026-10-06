@@ -227,6 +227,56 @@ func TestCreateEventDefaultContactRequirement(t *testing.T) {
 	assert.Equal(t, "email", ev.ContactRequirement)
 }
 
+func TestCreateEventCollectOrganization(t *testing.T) {
+	svc, authStore := setupEvent(t)
+	org := createOrganizer(t, authStore)
+	ctx := context.Background()
+
+	ev, err := svc.Create(ctx, org.ID, CreateEventRequest{
+		Title:     "Default Event",
+		EventDate: "2026-06-15T14:00",
+	})
+	require.NoError(t, err)
+	assert.False(t, ev.CollectOrganization)
+
+	collectOrganization := true
+	configured, err := svc.Create(ctx, org.ID, CreateEventRequest{
+		Title:               "Organization Event",
+		EventDate:           "2026-06-15T14:00",
+		CollectOrganization: &collectOrganization,
+	})
+	require.NoError(t, err)
+	assert.True(t, configured.CollectOrganization)
+
+	found, err := svc.GetByID(ctx, configured.ID)
+	require.NoError(t, err)
+	assert.True(t, found.CollectOrganization)
+	assert.True(t, found.ToPublic().CollectOrganization)
+}
+
+func TestUpdateEventCollectOrganization(t *testing.T) {
+	svc, authStore := setupEvent(t)
+	org := createOrganizer(t, authStore)
+	ctx := context.Background()
+
+	ev, err := svc.Create(ctx, org.ID, CreateEventRequest{
+		Title:     "Party",
+		EventDate: "2026-06-15T14:00",
+	})
+	require.NoError(t, err)
+
+	collectOrganization := true
+	updated, err := svc.Update(ctx, ev.ID, org.ID, UpdateEventRequest{
+		CollectOrganization: &collectOrganization,
+	})
+	require.NoError(t, err)
+	assert.True(t, updated.CollectOrganization)
+
+	found, err := svc.GetByID(ctx, ev.ID)
+	require.NoError(t, err)
+	assert.True(t, found.CollectOrganization)
+}
+
 func TestCreateEventCustomContactRequirement(t *testing.T) {
 	svc, authStore := setupEvent(t)
 	org := createOrganizer(t, authStore)

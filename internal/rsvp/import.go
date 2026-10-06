@@ -18,6 +18,7 @@ const maxImportRows = 500
 // columnAliases maps canonical column names to their accepted aliases.
 var columnAliases = map[string][]string{
 	"name":          {"name", "full name", "full_name", "guest name", "guest_name", "attendee"},
+	"organization":  {"organization", "organization / representing", "company", "company name", "company_name", "organization name", "representing", "institution", "instansi / perusahaan"},
 	"email":         {"email", "email address", "email_address", "e-mail", "mail"},
 	"phone":         {"phone", "phone number", "phone_number", "telephone", "mobile", "cell"},
 	"dietary_notes": {"dietary notes", "dietary_notes", "dietary", "diet", "food", "allergies", "restrictions"},
@@ -27,6 +28,7 @@ var columnAliases = map[string][]string{
 // CSVImportRow represents a single row from a CSV import file.
 type CSVImportRow struct {
 	Name         string `json:"name"`
+	Organization string `json:"organization,omitempty"`
 	Email        string `json:"email"`
 	Phone        string `json:"phone"`
 	DietaryNotes string `json:"dietaryNotes"`
@@ -169,6 +171,12 @@ func (s *Service) ParseCSVPreview(ctx context.Context, eventID, organizerID stri
 			resp.Rows = append(resp.Rows, row)
 			continue
 		}
+		if len(row.Organization) > maxOrganizationLen {
+			row.Error = fmt.Sprintf("organization must be %d characters or less", maxOrganizationLen)
+			resp.ErrorRows++
+			resp.Rows = append(resp.Rows, row)
+			continue
+		}
 
 		// Validate email format if provided.
 		if row.Email != "" {
@@ -277,6 +285,10 @@ func (s *Service) ExecuteCSVImport(ctx context.Context, eventID, organizerID str
 			result.Skipped++
 			continue
 		}
+		if len(strings.TrimSpace(row.Organization)) > maxOrganizationLen {
+			result.Skipped++
+			continue
+		}
 
 		// The rows come back from the client, so check plus ones again.
 		if row.PlusOnes < 0 || row.PlusOnes > maxPlusOnes {
@@ -302,6 +314,7 @@ func (s *Service) ExecuteCSVImport(ctx context.Context, eventID, organizerID str
 			ID:            uuid.Must(uuid.NewV7()).String(),
 			EventID:       eventID,
 			Name:          row.Name,
+			Organization:  strings.TrimSpace(row.Organization),
 			RSVPStatus:    "pending",
 			RSVPToken:     rsvpToken,
 			ContactMethod: "email",
@@ -374,6 +387,9 @@ func parseCSVRow(record []string, colMap map[string]int) CSVImportRow {
 
 	if idx, ok := colMap["name"]; ok && idx < len(record) {
 		row.Name = strings.TrimSpace(record[idx])
+	}
+	if idx, ok := colMap["organization"]; ok && idx < len(record) {
+		row.Organization = strings.TrimSpace(record[idx])
 	}
 	if idx, ok := colMap["email"]; ok && idx < len(record) {
 		row.Email = strings.TrimSpace(record[idx])

@@ -604,7 +604,11 @@ func TestHandleListByEvent_Success(t *testing.T) {
 	shareToken, eventID := publishEvent(t, eventSvc, org.ID)
 
 	doRSVP(t, svc, shareToken, "Alice", "alice@example.com")
-	doRSVP(t, svc, shareToken, "Bob", "bob@example.com")
+	_, err := svc.SubmitRSVP(context.Background(), shareToken, rsvp.RSVPRequest{
+		Name: "Bob", Organization: "Example Company", Email: sp("bob@example.com"),
+		RSVPStatus: "attending", ContactMethod: "email",
+	})
+	require.NoError(t, err)
 
 	rr := testutil.DoRequest(t, h, "GET", "/event/"+eventID, nil)
 
@@ -613,6 +617,7 @@ func TestHandleListByEvent_Success(t *testing.T) {
 	data, ok := body["data"].([]any)
 	require.True(t, ok)
 	assert.Len(t, data, 2)
+	assert.Contains(t, rr.Body.String(), `"organization":"Example Company"`)
 }
 
 func TestHandleListByEvent_Unauthorized(t *testing.T) {
@@ -722,7 +727,11 @@ func TestHandleExportCSV_Success(t *testing.T) {
 	shareToken, eventID := publishEvent(t, eventSvc, org.ID)
 
 	doRSVP(t, svc, shareToken, "Alice", "alice@example.com")
-	doRSVP(t, svc, shareToken, "Bob", "bob@example.com")
+	_, err := svc.SubmitRSVP(context.Background(), shareToken, rsvp.RSVPRequest{
+		Name: "Bob", Organization: "Example Company", Email: sp("bob@example.com"),
+		RSVPStatus: "attending", ContactMethod: "email",
+	})
+	require.NoError(t, err)
 
 	rr := testutil.DoRequest(t, h, "GET", "/event/"+eventID+"/export", nil)
 
@@ -730,9 +739,10 @@ func TestHandleExportCSV_Success(t *testing.T) {
 	assert.Contains(t, rr.Header().Get("Content-Type"), "text/csv")
 	assert.Contains(t, rr.Header().Get("Content-Disposition"), ".csv")
 	body := rr.Body.String()
-	assert.Contains(t, body, "Name,Email,Phone,RSVP Status,Dietary Notes,Plus Ones,RSVP Date")
+	assert.Contains(t, body, "Name,Organization / Representing,Email,Phone,RSVP Status,Dietary Notes,Plus Ones,RSVP Date")
 	assert.Contains(t, body, "Alice")
 	assert.Contains(t, body, "Bob")
+	assert.Contains(t, body, "Bob,Example Company,bob@example.com")
 }
 
 func TestHandleExportCSV_FilterByStatus(t *testing.T) {
@@ -786,7 +796,7 @@ func TestExportCSV_EmptyGuestList(t *testing.T) {
 	assert.Contains(t, rr.Header().Get("Content-Type"), "text/csv")
 	body := rr.Body.String()
 	// Should contain the BOM + header row and nothing else.
-	assert.Contains(t, body, "Name,Email,Phone,RSVP Status,Dietary Notes,Plus Ones,RSVP Date")
+	assert.Contains(t, body, "Name,Organization / Representing,Email,Phone,RSVP Status,Dietary Notes,Plus Ones,RSVP Date")
 	// Count the number of newlines: header row only means exactly 1 data line.
 	lines := strings.Split(strings.TrimSpace(body), "\n")
 	assert.Equal(t, 1, len(lines), "empty guest list should produce header row only")

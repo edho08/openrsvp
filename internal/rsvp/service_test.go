@@ -70,6 +70,39 @@ func TestSubmitRSVP(t *testing.T) {
 	assert.Equal(t, "email", attendee.ContactMethod)
 }
 
+func TestSubmitRSVPOrganizationAndPhoneContactPersist(t *testing.T) {
+	svc, eventSvc, authStore := setupRSVP(t)
+	svc.SetSMSEnabled(true)
+	ctx := context.Background()
+	org, err := authStore.CreateOrganizer(ctx, "org@example.com")
+	require.NoError(t, err)
+	contactRequirement := "email_or_phone"
+	raw, err := eventSvc.Create(ctx, org.ID, event.CreateEventRequest{
+		Title: "Test Event", EventDate: "2026-06-15T14:00", ContactRequirement: &contactRequirement,
+	})
+	require.NoError(t, err)
+	ev, err := eventSvc.Publish(ctx, raw.ID, org.ID)
+	require.NoError(t, err)
+
+	attendee, err := svc.SubmitRSVP(ctx, ev.ShareToken, RSVPRequest{
+		Name: "Rina", Organization: "  Example Company  ", Phone: strPtr("+1 (555) 123-4567"), RSVPStatus: "attending",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Example Company", attendee.Organization)
+	assert.Equal(t, "sms", attendee.ContactMethod)
+	assert.Nil(t, attendee.Email)
+	assert.Equal(t, "+15551234567", *attendee.Phone)
+
+	stored, err := svc.GetByToken(ctx, attendee.RSVPToken)
+	require.NoError(t, err)
+	assert.Equal(t, "Example Company", stored.Organization)
+
+	updatedOrganization := "Updated Company"
+	updated, err := svc.UpdateByToken(ctx, attendee.RSVPToken, UpdateRSVPRequest{Organization: &updatedOrganization})
+	require.NoError(t, err)
+	assert.Equal(t, updatedOrganization, updated.Organization)
+}
+
 func TestSubmitRSVPDuplicateEmail(t *testing.T) {
 	svc, eventSvc, authStore := setupRSVP(t)
 	ctx := context.Background()
@@ -518,6 +551,7 @@ func TestUpdateAttendeeAsOrganizer(t *testing.T) {
 
 	updated, err := svc.UpdateAttendeeAsOrganizer(ctx, ev.ID, attendee.ID, OrganizerUpdateAttendeeRequest{
 		Name:         strPtr("Alice Smith"),
+		Organization: strPtr("Example Company"),
 		Email:        strPtr("alice.smith@example.com"),
 		RSVPStatus:   strPtr("maybe"),
 		DietaryNotes: strPtr("Vegetarian"),
@@ -525,6 +559,7 @@ func TestUpdateAttendeeAsOrganizer(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Alice Smith", updated.Name)
+	assert.Equal(t, "Example Company", updated.Organization)
 	assert.Equal(t, "alice.smith@example.com", *updated.Email)
 	assert.Equal(t, "maybe", updated.RSVPStatus)
 	assert.Equal(t, "Vegetarian", updated.DietaryNotes)

@@ -243,13 +243,14 @@
 
 	// Editing attendees
 	let editingAttendeeId: string | null = $state(null);
-	let editAttendee = $state({ name: '', email: '', phone: '', rsvpStatus: '', dietaryNotes: '', plusOnes: 0 });
+	let editAttendee = $state({ name: '', organization: '', email: '', phone: '', rsvpStatus: '', dietaryNotes: '', plusOnes: 0 });
 	let savingAttendee = $state(false);
 
 	function startEditAttendee(attendee: Attendee) {
 		editingAttendeeId = attendee.id;
 		editAttendee = {
 			name: attendee.name,
+			organization: attendee.organization || '',
 			email: attendee.email || '',
 			phone: attendee.phone || '',
 			rsvpStatus: attendee.rsvpStatus,
@@ -268,6 +269,7 @@
 		try {
 			const result = await api.patch<{ data: Attendee }>(`/rsvp/event/${eventId}/${editingAttendeeId}`, {
 				name: editAttendee.name,
+				organization: editAttendee.organization,
 				email: editAttendee.email || undefined,
 				phone: editAttendee.phone || undefined,
 				rsvpStatus: editAttendee.rsvpStatus,
@@ -791,6 +793,10 @@
 										<input id="edit-name" type="text" bind:value={editAttendee.name} class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
 									</div>
 									<div>
+										<label for="edit-organization" class="block text-xs font-medium text-neutral-700 mb-1">Organization / Representing</label>
+										<input id="edit-organization" type="text" maxlength="200" bind:value={editAttendee.organization} class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+									</div>
+									<div>
 										<label for="edit-email" class="block text-xs font-medium text-neutral-700 mb-1">Email</label>
 										<input id="edit-email" type="email" bind:value={editAttendee.email} class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
 									</div>
@@ -826,6 +832,7 @@
 							<div class="px-6 py-3 flex items-center justify-between">
 								<div class="flex-1 min-w-0">
 									<p class="text-sm font-medium text-neutral-900">{attendee.name}</p>
+									{#if attendee.organization}<p class="text-xs text-neutral-600">Representing {attendee.organization}</p>{/if}
 									<p class="text-xs text-neutral-500">
 										{attendee.email || attendee.phone || 'No contact info'}
 									</p>

@@ -1,0 +1,1 @@
+ALTER TABLE attendees ADD COLUMN organization TEXT NOT NULL DEFAULT '';

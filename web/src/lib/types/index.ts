@@ -21,6 +21,7 @@ export interface Event {
 	contactRequirement: 'email' | 'phone' | 'email_or_phone' | 'email_and_phone';
 	showHeadcount: boolean;
 	showGuestList: boolean;
+	collectOrganization: boolean;
 	status: 'draft' | 'published' | 'cancelled' | 'archived';
 	shareToken: string;
 	rsvpDeadline?: string;
@@ -76,6 +77,7 @@ export interface Attendee {
 	id: string;
 	eventId: string;
 	name: string;
+	organization?: string;
 	email?: string;
 	phone?: string;
 	rsvpStatus: 'pending' | 'attending' | 'maybe' | 'declined' | 'waitlisted';
@@ -131,6 +133,7 @@ export interface PublicEvent {
 	location: string;
 	timezone: string;
 	contactRequirement: 'email' | 'phone' | 'email_or_phone' | 'email_and_phone';
+	collectOrganization: boolean;
 	rsvpDeadline?: string;
 	rsvpsClosed: boolean;
 	maxCapacity?: number;
@@ -254,6 +257,7 @@ export interface WebhookDelivery {
 
 export interface CSVImportRow {
 	name: string;
+	organization?: string;
 	email: string;
 	phone: string;
 	dietaryNotes: string;

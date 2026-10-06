@@ -32,6 +32,7 @@
 
 	// RSVP form state
 	let name = $state('');
+	let organization = $state('');
 	let email = $state('');
 	let phone = $state('');
 	let rsvpStatus = $state<'attending' | 'maybe' | 'declined'>('attending');
@@ -156,11 +157,14 @@
 
 	const contactReq = $derived(eventData?.contactRequirement ?? 'email_or_phone');
 	const emailRequired = $derived(
-		!$smsEnabled || contactReq === 'email' || contactReq === 'email_and_phone' || contactReq === 'email_or_phone'
+		!$smsEnabled || contactReq === 'email' || contactReq === 'email_and_phone'
 	);
 	const phoneRequired = $derived(
 		$smsEnabled && (contactReq === 'phone' || contactReq === 'email_and_phone')
 	);
+	const showEmail = $derived(emailRequired || (contactReq === 'email_or_phone' && $smsEnabled));
+	const showPhone = $derived(phoneRequired || (contactReq === 'email_or_phone' && $smsEnabled));
+	const contactChoiceRequired = $derived(contactReq === 'email_or_phone' && $smsEnabled);
 
 	// RSVP deadline display logic
 	const deadlineText = $derived.by(() => {
@@ -235,6 +239,7 @@
 		try {
 			const payload: Record<string, unknown> = {
 				name: name.trim(),
+				organization: organization.trim(),
 				email: email.trim(),
 				phone: normalizedPhone || undefined,
 				rsvpStatus,
@@ -409,8 +414,8 @@
 			</div>
 		{/if}
 
-		<!-- Attendance Display -->
-		{#if attendance && (attendance.headcount > 0 || (attendance.names && attendance.names.length > 0))}
+		<!-- Public attendance list is intentionally omitted for the branded Grand Opening invitation. -->
+		{#if !isGrandOpening && attendance && (attendance.headcount > 0 || (attendance.names && attendance.names.length > 0))}
 			{#if !(submitted && rsvpStatus === 'declined')}
 				<div class="w-full max-w-lg mb-8">
 					<div class="bg-surface/80 backdrop-blur-sm rounded-xl shadow border border-neutral-200/60 p-5">
@@ -452,7 +457,7 @@
 					</div>
 				</div>
 			{/if}
-		{:else if attendance && attendance.headcount === 0 && !(submitted && rsvpStatus === 'declined')}
+		{:else if !isGrandOpening && attendance && attendance.headcount === 0 && !(submitted && rsvpStatus === 'declined')}
 			<div class="w-full max-w-lg mb-8">
 				<div class="bg-surface/80 backdrop-blur-sm rounded-xl shadow border border-neutral-200/60 p-5">
 					<p class="text-sm text-neutral-500 text-center">Be the first to RSVP!</p>
@@ -554,56 +559,76 @@
 							/>
 						</div>
 
+						{#if eventData?.collectOrganization}
+							<div>
+								<label for="rsvp-organization" class="block text-sm font-medium text-neutral-700 mb-1.5">
+									Instansi / Perusahaan <span class="text-neutral-400 font-normal">(optional)</span>
+								</label>
+								<input
+									id="rsvp-organization"
+									type="text"
+									maxlength="200"
+									bind:value={organization}
+									placeholder="Company or organization"
+									class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+								/>
+							</div>
+						{/if}
+
 						{#if isGrandOpening && eventQuestions.length > 0}
 							<QuestionRenderer questions={eventQuestions} bind:answers />
 						{/if}
-						{#if !isGrandOpening || emailRequired}
-						<!-- Email -->
-						<div>
-							<label for="rsvp-email" class="block text-sm font-medium text-neutral-700 mb-1.5">
-								Email Address
-								{#if emailRequired}
-									<span class="text-error">*</span>
-								{:else}
-									<span class="text-neutral-400 font-normal">(optional)</span>
-								{/if}
-							</label>
-							<input
-								id="rsvp-email"
-								type="email"
-								required={emailRequired}
-								bind:value={email}
-								placeholder="you@example.com"
-								class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
-							/>
-						</div>
 
+						{#if !isGrandOpening || showEmail}
+							<!-- Email -->
+							<div>
+								<label for="rsvp-email" class="block text-sm font-medium text-neutral-700 mb-1.5">
+									Email Address
+									{#if emailRequired}
+										<span class="text-error">*</span>
+									{:else}
+										<span class="text-neutral-400 font-normal">(optional)</span>
+									{/if}
+								</label>
+								<input
+									id="rsvp-email"
+									type="email"
+									required={emailRequired || (contactChoiceRequired && !phone.trim())}
+									bind:value={email}
+									placeholder="you@example.com"
+									class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+								/>
+							</div>
 						{/if}
-						{#if !isGrandOpening || phoneRequired}
-						<!-- Phone -->
-						<div>
-							<label for="rsvp-phone" class="block text-sm font-medium text-neutral-700 mb-1.5">
-								Phone Number
-								{#if phoneRequired}
-									<span class="text-error">*</span>
-								{:else}
-									<span class="text-neutral-400 font-normal">(optional)</span>
-								{/if}
-							</label>
-							<input
-								id="rsvp-phone"
-								type="tel"
-								required={phoneRequired}
-								bind:value={phone}
-								placeholder="+14155552671"
-								aria-describedby="rsvp-phone-hint"
-								class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
-							/>
-							<p id="rsvp-phone-hint" class="mt-1.5 text-xs text-neutral-500">
-								Include your country code (e.g. +1 for the US, +32 for Belgium).
-							</p>
-						</div>
 
+						{#if !isGrandOpening || showPhone}
+							<!-- Phone -->
+							<div>
+								<label for="rsvp-phone" class="block text-sm font-medium text-neutral-700 mb-1.5">
+									Phone Number
+									{#if phoneRequired}
+										<span class="text-error">*</span>
+									{:else}
+										<span class="text-neutral-400 font-normal">(optional)</span>
+									{/if}
+								</label>
+								<input
+									id="rsvp-phone"
+									type="tel"
+									required={phoneRequired || (contactChoiceRequired && !email.trim())}
+									bind:value={phone}
+									placeholder="+14155552671"
+									aria-describedby="rsvp-phone-hint"
+									class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+								/>
+								<p id="rsvp-phone-hint" class="mt-1.5 text-xs text-neutral-500">
+									Include your country code (e.g. +1 for the US, +32 for Belgium).
+								</p>
+							</div>
+						{/if}
+
+						{#if contactChoiceRequired}
+							<p class="-mt-4 text-xs text-neutral-500">Provide either an email address or a phone number.</p>
 						{/if}
 						<!-- RSVP Status -->
 						<fieldset>
@@ -781,9 +806,9 @@
 		{#if !isGrandOpening}{@render responseContent()}{/if}
 		<!-- Guestbook -->
 		{#if eventData?.commentsEnabled}
-			<div class="w-full max-w-lg mt-8">
-				<div class="bg-surface/80 backdrop-blur-sm rounded-xl shadow border border-neutral-200/60 p-5">
-					<h3 class="font-display text-lg font-semibold text-neutral-900 mb-4">Guestbook</h3>
+			<div class="w-full max-w-lg mt-8" class:go-guestbook={isGrandOpening}>
+				<div class="bg-surface/80 backdrop-blur-sm rounded-xl shadow border border-neutral-200/60 p-5" class:go-guestbook-panel={isGrandOpening}>
+					<h3 class="font-display text-lg font-semibold text-neutral-900 mb-4" class:go-guestbook-title={isGrandOpening}>Guestbook</h3>
 
 					{#if submitted && rsvpToken}
 						<form onsubmit={(e) => { e.preventDefault(); submitComment(); }} class="mb-6">
@@ -793,6 +818,7 @@
 								rows="3"
 								maxlength="2000"
 								class="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors resize-none"
+								class:go-guestbook-input={isGrandOpening}
 							></textarea>
 							{#if commentError}
 								<p class="text-xs text-error mt-1">{commentError}</p>
@@ -802,6 +828,7 @@
 									type="submit"
 									disabled={submittingComment || !newComment.trim()}
 									class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+									class:go-guestbook-button={isGrandOpening}
 								>
 									{submittingComment ? 'Posting...' : 'Post Comment'}
 								</button>
@@ -814,7 +841,7 @@
 					{:else}
 						<div class="space-y-4">
 							{#each comments as comment (comment.id)}
-								<div class="border-b border-neutral-100 pb-3 last:border-0">
+								<div class="border-b border-neutral-100 pb-3 last:border-0" class:go-guestbook-entry={isGrandOpening}>
 									<div class="flex items-center justify-between mb-1">
 										<span class="text-sm font-medium text-neutral-900">{comment.authorName}</span>
 										<div class="flex items-center gap-2">
@@ -863,8 +890,15 @@
 </div>
 
 <style>
+	:global(.go-guestbook) { max-width: 1080px; margin-top: 0; padding: 3rem 1.5rem 2rem; background: #f7f7f7; }
+	:global(.go-guestbook-panel) { max-width: 42rem !important; margin: auto; padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+	:global(.go-guestbook-title) { margin-bottom: 1.25rem !important; color: #176c55; font-size: 1.4rem; text-align: center; }
+	:global(.go-guestbook-input) { border-color: #cbded4; border-radius: .75rem; }
+	:global(.go-guestbook-button) { border-radius: 999px; background: #0ca678; padding-inline: 1.25rem; }
+	:global(.go-guestbook-entry) { padding: .85rem 0; border-color: #e2ebe5; }
 	@media (max-width: 700px) {
 		.grand-opening-page { padding: 0; }
+		:global(.go-guestbook) { padding: 2.5rem 1.25rem 1.5rem; }
 	}
 	.rsvp-option {
 		display: flex;

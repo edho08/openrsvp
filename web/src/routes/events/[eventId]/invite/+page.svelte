@@ -3,7 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api/client';
 	import { toast } from '$lib/stores/toast';
-	import type { InviteCard, Event } from '$lib/types';
+	import { smsEnabled, loadAppConfig } from '$lib/stores/config';
+	import type { InviteCard, Event, EventQuestion } from '$lib/types';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
@@ -20,6 +21,17 @@
 	let saving = $state(false);
 	let saved = $state(false);
 	let event: Event | null = $state(null);
+	let contactRequirement = $state<Event['contactRequirement']>('email_or_phone');
+	let eventQuestions = $state<EventQuestion[]>([]);
+	const emailRequired = $derived(
+		!$smsEnabled || contactRequirement === 'email' || contactRequirement === 'email_and_phone'
+	);
+	const phoneRequired = $derived(
+		$smsEnabled && !!event && (contactRequirement === 'phone' || contactRequirement === 'email_and_phone')
+	);
+	const contactChoiceRequired = $derived($smsEnabled && contactRequirement === 'email_or_phone');
+	const showEmail = $derived(emailRequired || contactChoiceRequired);
+	const showPhone = $derived(phoneRequired || contactChoiceRequired);
 
 	// Template selection
 	let selectedTemplate = $state('balloon-party');
@@ -240,11 +252,15 @@
 
 	onMount(async () => {
 		try {
-			const [eventResult, inviteResult] = await Promise.all([
+			await loadAppConfig();
+			const [eventResult, inviteResult, questionsResult] = await Promise.all([
 				api.get<{ data: Event }>(`/events/${eventId}`),
-				api.get<{ data: InviteCard }>(`/invite/event/${eventId}`).catch(() => null)
+				api.get<{ data: InviteCard }>(`/invite/event/${eventId}`).catch(() => null),
+				api.get<{ data: EventQuestion[] }>(`/events/${eventId}/questions`).catch(() => ({ data: [] as EventQuestion[] }))
 			]);
 			event = eventResult.data;
+			contactRequirement = eventResult.data.contactRequirement ?? 'email_or_phone';
+			eventQuestions = questionsResult.data ?? [];
 
 			if (inviteResult) {
 				const invite = inviteResult.data;
@@ -587,6 +603,7 @@
 						eventLocation={event?.location || ''}
 						customData={customDataJSON}
 						timezone={event?.timezone}
+						rsvpPreview={{ collectOrganization: event?.collectOrganization ?? false, emailRequired, phoneRequired, showEmail, showPhone, contactChoiceRequired, questions: eventQuestions }}
 					/>
 				</div>
 			</div>

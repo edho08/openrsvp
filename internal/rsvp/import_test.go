@@ -21,7 +21,7 @@ func TestParseCSVPreview_BasicValid(t *testing.T) {
 	require.NoError(t, err)
 	ev := createPublishedEvent(t, eventSvc, org.ID)
 
-	csv := "Name,Email,Phone,Dietary Notes,Plus Ones\nAlice,alice@example.com,+14155551234,Vegan,2\nBob,bob@example.com,,,0\n"
+	csv := "Name,Organization / Representing,Email,Phone,Dietary Notes,Plus Ones\nAlice,Example Co,alice@example.com,+14155551234,Vegan,2\nBob,,bob@example.com,,,0\n"
 	preview, err := svc.ParseCSVPreview(ctx, ev.ID, org.ID, strings.NewReader(csv))
 	require.NoError(t, err)
 	assert.Equal(t, 2, preview.TotalRows)
@@ -30,6 +30,7 @@ func TestParseCSVPreview_BasicValid(t *testing.T) {
 	assert.Equal(t, 0, preview.Duplicates)
 
 	assert.Equal(t, "Alice", preview.Rows[0].Name)
+	assert.Equal(t, "Example Co", preview.Rows[0].Organization)
 	assert.Equal(t, "alice@example.com", preview.Rows[0].Email)
 	assert.Equal(t, "+14155551234", preview.Rows[0].Phone)
 	assert.Equal(t, "Vegan", preview.Rows[0].DietaryNotes)
@@ -275,7 +276,7 @@ func TestExecuteCSVImport_Basic(t *testing.T) {
 
 	req := CSVImportRequest{
 		Rows: []CSVImportRow{
-			{Name: "Alice", Email: "alice@example.com", PlusOnes: 1},
+			{Name: "Alice", Organization: "Example Company", Email: "alice@example.com", PlusOnes: 1},
 			{Name: "Bob", Email: "bob@example.com"},
 		},
 	}
@@ -302,6 +303,7 @@ func TestExecuteCSVImport_Basic(t *testing.T) {
 	}
 	require.NotNil(t, alice)
 	assert.Equal(t, "pending", alice.RSVPStatus)
+	assert.Equal(t, "Example Company", alice.Organization)
 	assert.Equal(t, "email", alice.ContactMethod)
 	assert.Equal(t, 1, alice.PlusOnes)
 	assert.NotNil(t, alice.Email)
@@ -322,13 +324,14 @@ func TestExecuteCSVImport_SkipsErrors(t *testing.T) {
 			{Name: "Alice", Email: "alice@example.com"},
 			{Name: "", Error: "name is required"}, // Has error from preview.
 			{Name: "Charlie", Email: "charlie@example.com"},
+			{Name: "Long Org", Organization: strings.Repeat("x", maxOrganizationLen+1)},
 		},
 	}
 
 	result, err := svc.ExecuteCSVImport(ctx, ev.ID, org.ID, req)
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.Imported)
-	assert.Equal(t, 1, result.Skipped) // The error row.
+	assert.Equal(t, 2, result.Skipped) // The error row and overlong organization.
 }
 
 func TestExecuteCSVImport_SkipsDuplicates(t *testing.T) {
@@ -588,7 +591,7 @@ func TestCSVEmailValidation(t *testing.T) {
 		{"user@example.com", true},
 		{"user+tag@example.com", true},
 		{"u@a.co", true},
-		{"", false},        // Empty - but we skip validation for empty
+		{"", false}, // Empty - but we skip validation for empty
 		{"notanemail", false},
 		{"@example.com", false},
 		{"user@", false},
