@@ -37,6 +37,15 @@
 		rsvpPreview = { collectOrganization: false, emailRequired: true, phoneRequired: false, showEmail: true, showPhone: false, contactChoiceRequired: false, questions: [] } }: Props = $props();
 
 	const asset = (name: string) => `/invite/grand-opening/${name}.webp`;
+	const defaultVideoURL = 'https://www.youtube.com/watch?v=CjsGjKzpcP4';
+	const previousDefaultVideoURLs = ['https://example.com/grand-opening-video'];
+	const defaultMapsURL = 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8';
+	const previousDefaultMapsURLs = [
+		'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6',
+		'https://maps.google.com/?q=Kasir+Pintar',
+		'https://maps.google.com/?q=Kasir+Pintar+Surabaya'
+	];
+	const defaultMapCoordinates = ['-7.292833', '112.765293'];
 	const data = $derived.by((): Record<string, unknown> => {
 		try {
 			const parsed: unknown = typeof customData === 'string' ? JSON.parse(customData) : customData;
@@ -57,6 +66,42 @@
 	function socialURL(value: unknown, fallback: string, replacedDefault?: string): string {
 		const url = safeURL(value);
 		return !url || url === replacedDefault ? fallback : url;
+	}
+	function youtubeEmbedURL(value: string): string {
+		try {
+			const url = new URL(value);
+			const host = url.hostname.toLowerCase();
+			let videoId = '';
+			if (host === 'youtu.be') {
+				videoId = url.pathname.split('/').filter(Boolean)[0] || '';
+			} else if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(host)) {
+				if (url.pathname === '/watch') videoId = url.searchParams.get('v') || '';
+				else videoId = url.pathname.match(/^\/(?:embed|shorts)\/([\w-]{11})(?:\/|$)/)?.[1] || '';
+			}
+			return /^[\w-]{11}$/.test(videoId)
+				? `https://www.youtube.com/embed/${videoId}?rel=0`
+				: '';
+		} catch { return ''; }
+	}
+	function googleMapsEmbedURL(value: string): string {
+		let coordinates: string[] | null = null;
+		if (value === defaultMapsURL || previousDefaultMapsURLs.includes(value)) {
+			coordinates = defaultMapCoordinates;
+		} else {
+			try {
+				const url = new URL(value);
+				if (!['google.com', 'www.google.com', 'maps.google.com'].includes(url.hostname.toLowerCase())) return '';
+				const placeCoordinates = url.href.match(/!3d(-?\d{1,2}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/);
+				const queryCoordinates = (url.searchParams.get('q') || url.searchParams.get('query') || url.searchParams.get('ll') || '')
+					.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
+				coordinates = placeCoordinates ? [placeCoordinates[1], placeCoordinates[2]]
+					: queryCoordinates ? [queryCoordinates[1], queryCoordinates[2]] : null;
+			} catch { return ''; }
+		}
+		if (!coordinates) return '';
+		const [latitude, longitude] = coordinates.map(Number);
+		if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return '';
+		return `https://www.google.com/maps?q=${encodeURIComponent(`${coordinates[0]},${coordinates[1]}`)}&z=17&output=embed`;
 	}
 	function color(value: string, fallback: string): string {
 		return /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(value.trim()) ? value.trim() : fallback;
@@ -86,11 +131,15 @@
 	const workspaceImage = $derived(safeURL(data.workspaceImage) || asset('office-workspace'));
 	const footerImage = $derived(safeURL(data.footerImage) || asset('office-closing'));
 	const videoThumbnail = $derived(safeURL(data.videoThumbnail) || safeURL(data.storyImage) || asset('journey-poster'));
-	const videoURL = $derived(safeURL(data.videoUrl));
+	const configuredVideoURL = $derived(safeURL(data.videoUrl));
+	const videoURL = $derived(configuredVideoURL && !previousDefaultVideoURLs.includes(configuredVideoURL)
+		? configuredVideoURL : defaultVideoURL);
+	const videoEmbedURL = $derived(youtubeEmbedURL(videoURL));
 	const mapImage = $derived(safeURL(data.mapImage) || asset('maps-preview'));
 	const configuredMapURL = $derived(safeURL(data.mapsUrl));
-	const mapURL = $derived(configuredMapURL && !/^https:\/\/maps\.google\.com\/\?q=Kasir\+Pintar(?:\+Surabaya)?$/i.test(configuredMapURL)
-		? configuredMapURL : 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
+	const mapURL = $derived(configuredMapURL && !previousDefaultMapsURLs.includes(configuredMapURL)
+		? configuredMapURL : defaultMapsURL);
+	const mapEmbedURL = $derived(googleMapsEmbedURL(mapURL));
 	const weekday = $derived(dateLabel(eventDate, { weekday: 'long' }, 'Save the date').replace('Jumat', 'Jum’at'));
 	const fullDate = $derived(dateLabel(eventDate, { day: 'numeric', month: 'long', year: 'numeric' }, 'Tanggal akan diumumkan'));
 	const time = $derived(dateLabel(eventDate, { hour: '2-digit', minute: '2-digit' }, '--:--').replace('.', ':'));
@@ -187,7 +236,11 @@
 		<p class="go-section-kicker">OUR JOURNEY</p>
 		<h2 id="go-journey-title">{storyTitle}</h2>
 		<div class="go-video-panel">
-			{#if videoURL}
+			{#if videoEmbedURL}
+				<div class="go-video-card go-video-embed">
+					<iframe src={videoEmbedURL} title={text(data.videoTitle, 'Perjalanan Kasir Pintar')} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+				</div>
+			{:else if videoURL}
 				<a class="go-video-card" href={videoURL} target="_blank" rel="noopener noreferrer" aria-label="Open {text(data.videoTitle, 'Perjalanan Kasir Pintar')}">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</a>
 			{:else}<div class="go-video-card" aria-label="Video preview; video link not yet supplied">{@render photo(videoThumbnail, 'journey-poster', 'Perjalanan Kasir Pintar bersama UMKM')}</div>{/if}
 			<p>{#if videoCaption === 'Terus berusaha tumbuh bersama UMKM Indonesia'}Terus berusaha <strong>tumbuh bersama</strong><br />UMKM Indonesia{:else}{videoCaption}{/if}</p>
@@ -209,10 +262,16 @@
 			<div class="go-detail-row"><img src={asset('detail-clock')} alt="" loading="lazy" /><p><strong>{time} {zone}</strong><span>– {endTime}</span></p></div>
 			<div class="go-detail-row"><img src={asset('detail-location')} alt="" loading="lazy" /><p><strong>{venueName}</strong><span>{mapsLabel}</span></p></div>
 		</div>
-		<a class="go-map-card" href={mapURL} target="_blank" rel="noopener noreferrer" aria-label="Open event location in Google Maps">
-			<div class="go-map-image">{@render photo(mapImage, 'maps-preview', 'Lokasi kantor di Manyar Kartika III, Surabaya')}</div>
-			<span class="go-map-link">Lihat Lokasi di Google Maps</span>
-		</a>
+		<div class="go-map-card">
+			<div class="go-map-image">
+				{#if mapEmbedURL}
+					<iframe src={mapEmbedURL} title={`Peta lokasi: ${mapsLabel}`} loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+				{:else}
+					{@render photo(mapImage, 'maps-preview', `Pratinjau peta: ${mapsLabel}`)}
+				{/if}
+			</div>
+			<a class="go-map-link" href={mapURL} target="_blank" rel="noopener noreferrer">Lihat Lokasi di Google Maps</a>
+		</div>
 	</section>
 
 	<section class="go-rsvp-section" aria-labelledby="go-rsvp-title">
@@ -299,6 +358,8 @@
 	.go-journey h2 { color: #109873; margin-top: 3.5cqw; }
 	.go-video-panel { margin-top: 6cqw; padding: 9cqw 3.6cqw 8.6cqw; background: url('/invite/grand-opening/journey-panel.webp') center/100% 100% no-repeat; border-radius: 3cqw; color: white; }
 	.go-video-card { display: block; }
+	.go-video-embed { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 2cqw; }
+	.go-video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 	.go-video-panel p { margin: 8.5cqw auto 0; font-size: 4cqw; line-height: 1.18; max-width: 68cqw; }
 	.go-chapter { min-height: 175.185cqw; background: var(--go-primary); text-align: center; color: white; }
 	.go-interior-photo { width: 100%; }
@@ -317,9 +378,11 @@
 	.go-detail-row strong, .go-detail-row span { display: block; }
 	.go-detail-row:last-child span { font-size: 3.2cqw; }
 	.go-map-card { position: relative; z-index: 2; display: block; width: 74.26%; margin: 6cqw auto 0; background: url('/invite/grand-opening/maps-frame.webp') center/100% 100% no-repeat; aspect-ratio: 802 / 415; padding: 1.8cqw; }
-	.go-map-image { height: 100%; overflow: hidden; border-radius: 2cqw; }
+	.go-map-image { position: relative; height: 100%; overflow: hidden; border-radius: 2cqw; }
 	.go-map-image img { height: 100%; object-fit: cover; }
-	.go-map-link { position: absolute; z-index: 3; bottom: 1.8cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; font-size: 2.6cqw; font-weight: 700; white-space: nowrap; transition: filter .2s ease, transform .2s ease; }
+	.go-map-image iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+	.go-map-link { position: absolute; z-index: 3; bottom: 1.8cqw; left: 21.75%; width: 56.5%; aspect-ratio: 453 / 88; display: flex; align-items: center; justify-content: center; background: url('/invite/grand-opening/maps-button.webp') center/100% 100% no-repeat; color: inherit; font-size: 2.6cqw; font-weight: 700; text-decoration: none; white-space: nowrap; transition: filter .2s ease, transform .2s ease; }
+	.go-map-link:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
 	.go-map-card:hover .go-map-link, .go-response :global(button[type='submit']:hover) { filter: brightness(1.08); transform: translateY(-2px); }
 	.go-office-photo { position: absolute; z-index: 0; bottom: 0; left: 0; width: 100%; pointer-events: none; }
 	.go-rsvp-section { padding: 4.7cqw 8% 6cqw; text-align: center; }

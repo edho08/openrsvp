@@ -44,6 +44,14 @@
 	let secondaryColor = $state('#EC4899');
 	let font = $state('Inter');
 	const grandOpeningTemplateId = 'kasir-pintar-grand-opening';
+	const defaultGrandOpeningVideoUrl = 'https://www.youtube.com/watch?v=CjsGjKzpcP4';
+	const previousDefaultGrandOpeningVideoUrls = ['https://example.com/grand-opening-video'];
+	const defaultGrandOpeningMapsUrl = 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8';
+	const previousDefaultGrandOpeningMapsUrls = [
+		'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6',
+		'https://maps.google.com/?q=Kasir+Pintar',
+		'https://maps.google.com/?q=Kasir+Pintar+Surabaya'
+	];
 
 	// The branded template stores its replaceable content in InviteCard.customData.
 	// These fields keep the first wireframe editable without requiring final assets.
@@ -67,8 +75,8 @@
 	let grandOpeningMapImage = $state('');
 	let grandOpeningFooterImage = $state('');
 	let savedCustomData = $state<Record<string, unknown>>({});
-	let grandOpeningVideoUrl = $state('');
-	let grandOpeningMapsUrl = $state('https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
+	let grandOpeningVideoUrl = $state(defaultGrandOpeningVideoUrl);
+	let grandOpeningMapsUrl = $state(defaultGrandOpeningMapsUrl);
 	let grandOpeningMapsLabel = $state('Manyar Kartika III No 12, Menur Pumpungan, Kec. Sukolilo, Kota Surabaya');
 	let grandOpeningInstagramUrl = $state('');
 	let grandOpeningLinkedInUrl = $state('');
@@ -243,10 +251,13 @@
 		grandOpeningInteriorImage = text('interiorImage', grandOpeningInteriorImage);
 		grandOpeningMapImage = text('mapImage', grandOpeningMapImage);
 		grandOpeningFooterImage = text('footerImage', grandOpeningFooterImage);
-		grandOpeningVideoUrl = text('videoUrl', grandOpeningVideoUrl);
+		const savedVideoUrl = text('videoUrl', grandOpeningVideoUrl);
+		grandOpeningVideoUrl = previousDefaultGrandOpeningVideoUrls.includes(savedVideoUrl)
+			? defaultGrandOpeningVideoUrl
+			: savedVideoUrl;
 		const savedMapsUrl = text('mapsUrl', grandOpeningMapsUrl);
-		grandOpeningMapsUrl = savedMapsUrl === 'https://maps.google.com/?q=Kasir+Pintar+Surabaya'
-			? 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6'
+		grandOpeningMapsUrl = previousDefaultGrandOpeningMapsUrls.includes(savedMapsUrl)
+			? defaultGrandOpeningMapsUrl
 			: savedMapsUrl;
 		grandOpeningMapsLabel = text('mapsLabel', grandOpeningMapsLabel);
 		grandOpeningInstagramUrl = text('instagramUrl', grandOpeningInstagramUrl);

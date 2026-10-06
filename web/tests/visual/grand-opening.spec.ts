@@ -16,9 +16,10 @@ const invite = {
 	primaryColor: '#0CA678', secondaryColor: '#087F5B', font: 'Arial',
 	customData: JSON.stringify({ recipientName: 'Default Recipient', values: ['One', 'Two', 'Three'],
 		heroImage: '/missing-photo.jpg', instagramUrl: 'javascript:alert(1)',
+		videoUrl: 'https://example.com/grand-opening-video',
 		youtubeUrl: 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA',
 		tiktokUrl: 'https://www.tiktok.com/@kasirpintar?lang=en',
-		linkedinUrl: 'https://example.com/social', mapsUrl: 'https://example.com/map' })
+		linkedinUrl: 'https://example.com/social', mapsUrl: 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8' })
 };
 const attendee = { id: 'guest', name: 'Existing Guest', organization: 'Kasir Pintar', email: 'guest@example.com',
 	rsvpStatus: 'attending', rsvpToken: 'manage', plusOnes: 0, dietaryNotes: '' };
@@ -28,6 +29,8 @@ test.beforeEach(async ({ page }) => {
 	await page.route('**/api/v1/config', route => route.fulfill({ json: { data: { smsEnabled: false } } }));
 	await page.route('**/api/v1/auth/me', route => route.fulfill({ status: 401, json: { message: 'Unauthorized' } }));
 	await page.route('**/missing-photo.jpg', route => route.fulfill({ status: 404, body: '' }));
+	await page.route(/^https:\/\/www\.youtube\.com\/embed\//, route => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html></html>' }));
+	await page.route(/^https:\/\/www\.google\.com\/maps(?:\?|$)/, route => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html></html>' }));
 	await page.route('**/api/v1/rsvp/public/test', async route => {
 		if (route.request().method() === 'POST') {
 			const payload = route.request().postDataJSON();
@@ -60,6 +63,10 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/kasirpintar/');
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di YouTube' })).toHaveAttribute('href', 'https://www.youtube.com/@KasirPintar');
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di TikTok' })).toHaveAttribute('href', 'https://www.tiktok.com/@kasirpintar');
+	await expect(page.locator('.go-video-embed iframe')).toHaveAttribute('src', 'https://www.youtube.com/embed/CjsGjKzpcP4?rel=0');
+	await expect(page.locator('.go-map-link')).toHaveAttribute('href', 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8');
+	await expect(page.locator('.go-map-image iframe')).toHaveAttribute('src', `https://www.google.com/maps?q=${encodeURIComponent('-7.292833,112.765293')}&z=17&output=embed`);
+	await expect(page.locator('.go-map-image iframe')).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 	await expect(page.locator('.go-socials > a')).toHaveCount(3);
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di Facebook' })).toHaveCount(0);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -77,6 +84,21 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Modify Your RSVP' })).toHaveAttribute('href', '/r/manage');
 	expect(errors).toEqual([]);
+});
+
+test('non-YouTube video providers remain linked instead of embedded', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, questions, invite: { ...invite, customData: JSON.stringify({ videoUrl: 'https://example.com/story-video' }) }
+	} } }));
+	await page.goto('/i/test');
+	await expect(page.locator('.go-video-embed iframe')).toHaveCount(0);
+	await expect(page.locator('.go-video-panel > a.go-video-card')).toHaveAttribute('href', 'https://example.com/story-video');
+});
+
+test('legacy Grand Opening video placeholder embeds the supplied YouTube video', async ({ page }) => {
+	await page.goto('/i/test');
+	await expect(page.locator('.go-video-embed iframe')).toHaveAttribute('src', 'https://www.youtube.com/embed/CjsGjKzpcP4?rel=0');
+	await expect(page.locator('.go-video-panel > a.go-video-card')).toHaveCount(0);
 });
 
 test('Grand Opening accepts phone instead of email when event allows either contact', async ({ page }) => {
@@ -192,7 +214,8 @@ test('mobile map CTA stays above the office photo and the cover is full bleed', 
 		return top?.closest('.go-map-card') === el.closest('.go-map-card');
 	});
 	expect(hit).toBe(true);
-	await expect(mapCard).toHaveAttribute('href', 'https://example.com/map');
+	await expect(mapButton).toHaveAttribute('href', 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8');
+	await expect(mapCard.locator('.go-map-image iframe')).toBeVisible();
 });
 
 test('original assets and seven-section reference geometry', async ({ page }, testInfo) => {
@@ -203,6 +226,7 @@ test('original assets and seven-section reference geometry', async ({ page }, te
 	} } }));
 	await page.goto('/i/test?to=Edward%20Sumanto');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Edward Sumanto', { timeout: 15000 });
+	await expect(page.locator('.go-video-embed iframe')).toHaveAttribute('src', 'https://www.youtube.com/embed/CjsGjKzpcP4?rel=0');
 	await page.evaluate(() => document.fonts.ready);
 	const sections = ['go-cover', 'go-invitation', 'go-journey', 'go-chapter', 'go-details', 'go-rsvp-section', 'go-footer'];
 	const heights = [1920, 1614, 1334, 1892, 1892, 1400, 1718];
@@ -222,6 +246,16 @@ test('original assets and seven-section reference geometry', async ({ page }, te
 	await expect(page.locator('.go-detail-row img').first()).toHaveAttribute('src', '/invite/grand-opening/detail-calendar.webp');
 });
 
+test('full Google Maps links embed their exact place pin coordinates', async ({ page }) => {
+	const exactPlaceURL = 'https://www.google.com/maps/place/Manyar+Kartika+III+No.12,+Menur+Pumpungan,+Kec.+Sukolilo,+Surabaya,+Jawa+Timur+60118,+Indonesia/@-7.2928277,112.7627127,17z/data=!3m1!4b1!4m6!3m5!1s0x2dd7fa4cfa85134f:0x9fa7ddaff10e34cb!8m2!3d-7.292833!4d112.765293!16s%2Fg%2F11vlrtfmpv?entry=tts&g_ep=EgoyMDI2MDkzMC4wIPu8ASoASAFQAw%3D%3D&skid=709cb2ce-eebc-4a1d-be1e-a7383b9b567f';
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, questions, invite: { ...invite, customData: JSON.stringify({ mapsUrl: exactPlaceURL }) }
+	} } }));
+	await page.goto('/i/test');
+	await expect(page.locator('.go-map-link')).toHaveAttribute('href', exactPlaceURL);
+	await expect(page.locator('.go-map-image iframe')).toHaveAttribute('src', `https://www.google.com/maps?q=${encodeURIComponent('-7.292833,112.765293')}&z=17&output=embed`);
+});
+
 test('mobile cover opens with scroll and uses the supplied Maps location by default', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -230,7 +264,8 @@ test('mobile cover opens with scroll and uses the supplied Maps location by defa
 	} } }));
 	await page.goto('/i/test?to=Rina%20Pratama');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
-	await expect(page.locator('.go-map-card')).toHaveAttribute('href', 'https://maps.app.goo.gl/GtyJiSXfD21XFRZn6');
+	await expect(page.locator('.go-map-link')).toHaveAttribute('href', 'https://maps.app.goo.gl/L4acDDFqgxCmTZ7w8');
+	await expect(page.locator('.go-map-image iframe')).toHaveAttribute('src', `https://www.google.com/maps?q=${encodeURIComponent('-7.292833,112.765293')}&z=17&output=embed`);
 	await expect(page.locator('.go-map-link')).toHaveText('Lihat Lokasi di Google Maps');
 
 	const scene = page.locator('.go-cover');
