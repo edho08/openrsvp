@@ -223,8 +223,14 @@
 		grandOpeningRecipientRole = text('recipientRole', grandOpeningRecipientRole);
 		grandOpeningVideoCaption = text('videoCaption', grandOpeningVideoCaption);
 		grandOpeningWorkspaceImage = text('workspaceImage', grandOpeningWorkspaceImage);
-		grandOpeningYoutubeUrl = text('youtubeUrl', grandOpeningYoutubeUrl);
-		grandOpeningTiktokUrl = text('tiktokUrl', grandOpeningTiktokUrl);
+		const savedYoutubeUrl = text('youtubeUrl', grandOpeningYoutubeUrl);
+		grandOpeningYoutubeUrl = savedYoutubeUrl === 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA'
+			? 'https://www.youtube.com/@KasirPintar'
+			: savedYoutubeUrl;
+		const savedTiktokUrl = text('tiktokUrl', grandOpeningTiktokUrl);
+		grandOpeningTiktokUrl = savedTiktokUrl === 'https://www.tiktok.com/@kasirpintar?lang=en'
+			? 'https://www.tiktok.com/@kasirpintar'
+			: savedTiktokUrl;
 		grandOpeningBrand = text('brandName', grandOpeningBrand);
 		grandOpeningVenue = text('venueName', grandOpeningVenue);
 		grandOpeningCity = text('cityName', grandOpeningCity);

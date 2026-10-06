@@ -16,6 +16,8 @@ const invite = {
 	primaryColor: '#0CA678', secondaryColor: '#087F5B', font: 'Arial',
 	customData: JSON.stringify({ recipientName: 'Default Recipient', values: ['One', 'Two', 'Three'],
 		heroImage: '/missing-photo.jpg', instagramUrl: 'javascript:alert(1)',
+		youtubeUrl: 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA',
+		tiktokUrl: 'https://www.tiktok.com/@kasirpintar?lang=en',
 		linkedinUrl: 'https://example.com/social', mapsUrl: 'https://example.com/map' })
 };
 const attendee = { id: 'guest', name: 'Existing Guest', organization: 'Kasir Pintar', email: 'guest@example.com',
@@ -56,8 +58,8 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	await expect(page.locator('.go-building-placeholder')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di LinkedIn' })).toHaveCount(0);
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/kasirpintar/');
-	await expect(page.getByRole('link', { name: 'Kasir Pintar di YouTube' })).toHaveAttribute('href', 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA');
-	await expect(page.getByRole('link', { name: 'Kasir Pintar di TikTok' })).toHaveAttribute('href', 'https://www.tiktok.com/@kasirpintar?lang=en');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di YouTube' })).toHaveAttribute('href', 'https://www.youtube.com/@KasirPintar');
+	await expect(page.getByRole('link', { name: 'Kasir Pintar di TikTok' })).toHaveAttribute('href', 'https://www.tiktok.com/@kasirpintar');
 	await expect(page.locator('.go-socials > a')).toHaveCount(3);
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di Facebook' })).toHaveCount(0);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

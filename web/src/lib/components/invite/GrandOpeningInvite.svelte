@@ -54,6 +54,10 @@
 		try { return ['http:', 'https:'].includes(new URL(url).protocol) ? url : ''; }
 		catch { return ''; }
 	}
+	function socialURL(value: unknown, fallback: string, replacedDefault?: string): string {
+		const url = safeURL(value);
+		return !url || url === replacedDefault ? fallback : url;
+	}
 	function color(value: string, fallback: string): string {
 		return /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(value.trim()) ? value.trim() : fallback;
 	}
@@ -101,9 +105,9 @@
 		return valueDefaults.map((fallback, index) => text(oldWireframeValues ? '' : configured[index], fallback));
 	});
 	const socials = $derived([
-		{ name: 'Instagram', icon: 'social-instagram', url: safeURL(data.instagramUrl) || 'https://www.instagram.com/kasirpintar/' },
-		{ name: 'YouTube', icon: 'social-youtube', url: safeURL(data.youtubeUrl) || 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA' },
-		{ name: 'TikTok', icon: 'social-tiktok', url: safeURL(data.tiktokUrl) || 'https://www.tiktok.com/@kasirpintar?lang=en' }
+		{ name: 'Instagram', icon: 'social-instagram', url: socialURL(data.instagramUrl, 'https://www.instagram.com/kasirpintar/') },
+		{ name: 'YouTube', icon: 'social-youtube', url: socialURL(data.youtubeUrl, 'https://www.youtube.com/@KasirPintar', 'https://www.youtube.com/channel/UCnclxxBiwvGFq7Sy5lzMFbA') },
+		{ name: 'TikTok', icon: 'social-tiktok', url: socialURL(data.tiktokUrl, 'https://www.tiktok.com/@kasirpintar', 'https://www.tiktok.com/@kasirpintar?lang=en') }
 	]);
 	let failedImages = $state<string[]>([]);
 	function fail(url: string) { if (!failedImages.includes(url)) failedImages = [...failedImages, url]; }
