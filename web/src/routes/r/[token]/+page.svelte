@@ -40,7 +40,7 @@
 	let editing = $state(false);
 	let editName = $state('');
 	let editOrganization = $state('');
-	let editStatus = $state<'attending' | 'maybe' | 'declined'>('attending');
+	let editStatus = $state<'' | 'attending' | 'declined'>('attending');
 	let editDietary = $state('');
 	let editPlusOnes = $state(0);
 	let saving = $state(false);
@@ -111,7 +111,7 @@
 		if (!attendee) return;
 		editName = attendee.name;
 		editOrganization = attendee.organization || '';
-		editStatus = (attendee.rsvpStatus === 'pending' || attendee.rsvpStatus === 'waitlisted') ? 'attending' : attendee.rsvpStatus;
+		editStatus = attendee.rsvpStatus === 'maybe' ? '' : (attendee.rsvpStatus === 'pending' || attendee.rsvpStatus === 'waitlisted') ? 'attending' : attendee.rsvpStatus;
 		editDietary = attendee.dietaryNotes || '';
 		editPlusOnes = attendee.plusOnes;
 	}
@@ -120,6 +120,11 @@
 		e.preventDefault();
 		if (!editName.trim()) {
 			saveError = 'Name is required.';
+			return;
+		}
+
+		if (!editStatus) {
+			saveError = 'Please choose attending or declined.';
 			return;
 		}
 
@@ -383,7 +388,7 @@
 					</div>
 				{:else}
 				<div class="mb-4 rounded-md bg-error-light border border-error/20 px-4 py-3 text-sm text-error text-center">
-					This event is at capacity. You can still RSVP as "maybe" or "declined".
+					This event is at capacity. You can still RSVP as "declined".
 				</div>
 				{/if}
 			{/if}
@@ -449,7 +454,7 @@
 							<legend class="block text-sm font-medium text-neutral-700 mb-3">
 								Will you attend?
 							</legend>
-							<div class="grid grid-cols-3 gap-3">
+							<div class="grid grid-cols-2 gap-3">
 								<label
 									class="rsvp-option {attendingDisabled ? 'rsvp-option-disabled' : ''}"
 									class:rsvp-option-selected={editStatus === 'attending'}
@@ -463,13 +468,6 @@
 									{#if attendingDisabled}
 										<span class="text-[10px] text-error mt-0.5">Full</span>
 									{/if}
-								</label>
-								<label class="rsvp-option" class:rsvp-option-selected={editStatus === 'maybe'} class:rsvp-option-maybe={editStatus === 'maybe'}>
-									<input type="radio" name="editStatus" value="maybe" bind:group={editStatus} class="sr-only" />
-									<svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-									</svg>
-									<span class="text-xs sm:text-sm font-medium">Maybe</span>
 								</label>
 								<label class="rsvp-option" class:rsvp-option-selected={editStatus === 'declined'} class:rsvp-option-declined={editStatus === 'declined'}>
 									<input type="radio" name="editStatus" value="declined" bind:group={editStatus} class="sr-only" />

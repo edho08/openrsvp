@@ -296,7 +296,6 @@
 					{#if rsvpPreview.contactChoiceRequired}<p>Provide either an email address or a phone number.</p>{/if}
 					<p>Konfirmasi Kehadiran *</p>
 					<p class="go-preview-option">◯ &nbsp; Ya, Saya Akan Hadir</p>
-					<p class="go-preview-option">◯ &nbsp; Maybe</p>
 					<p class="go-preview-option">◯ &nbsp; Maaf, Saya Tidak Bisa Hadir</p>
 					<button disabled>KIRIM RSVP</button>
 				</div>

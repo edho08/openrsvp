@@ -190,7 +190,7 @@
 			: 0
 	);
 
-	// When at capacity, default to 'maybe' instead of 'attending'
+	// Attendance is unavailable when capacity is full and no waitlist is enabled.
 	const attendingDisabled = $derived(eventData?.atCapacity === true && !eventData?.waitlistEnabled);
 
 	// Waitlist mode: at capacity but waitlist is enabled
@@ -376,7 +376,7 @@
 				<div class="rounded-md bg-error-light border border-error/20 p-4 text-center">
 					<p class="text-sm font-medium text-error">This event is at capacity</p>
 					<p class="text-xs text-error/80 mt-1">
-						You can still RSVP as "maybe" or "declined".
+						You can still RSVP as "declined".
 					</p>
 				</div>
 			</div>
@@ -633,7 +633,7 @@
 							<legend class="block text-sm font-medium text-neutral-700 mb-3">
 								{isGrandOpening ? 'Konfirmasi Kehadiran *' : 'Will you attend?'}
 							</legend>
-							<div class="grid grid-cols-3 gap-3" class:go-attendance-options={isGrandOpening}>
+							<div class="grid grid-cols-2 gap-3" class:go-attendance-options={isGrandOpening}>
 								<label
 									class="rsvp-option {attendingDisabled ? 'rsvp-option-disabled' : ''}"
 									class:rsvp-option-selected={rsvpStatus === 'attending'}
@@ -647,13 +647,6 @@
 									{#if attendingDisabled}
 										<span class="text-[10px] text-error mt-0.5">Full</span>
 									{/if}
-								</label>
-								<label class="rsvp-option" class:rsvp-option-selected={rsvpStatus === 'maybe'} class:rsvp-option-maybe={rsvpStatus === 'maybe'}>
-									<input type="radio" name="rsvpStatus" value="maybe" bind:group={rsvpStatus} class="sr-only" />
-									<svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-									</svg>
-									<span class="text-xs sm:text-sm font-medium">Maybe</span>
 								</label>
 								<label class="rsvp-option" class:rsvp-option-selected={rsvpStatus === 'declined'} class:rsvp-option-declined={rsvpStatus === 'declined'}>
 									<input type="radio" name="rsvpStatus" value="declined" bind:group={rsvpStatus} class="sr-only" />
@@ -922,11 +915,6 @@
 		border-color: #22c55e;
 		background-color: #f0fdf4;
 		color: #16a34a;
-	}
-	.rsvp-option-maybe {
-		border-color: #f59e0b;
-		background-color: #fffbeb;
-		color: #d97706;
 	}
 	.rsvp-option-declined {
 		border-color: #ef4444;

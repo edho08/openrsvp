@@ -76,6 +76,8 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 		return !!form && !!footer && !!(form.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING);
 	})).toBe(true);
 	await page.locator('#rsvp-name').fill('New Guest');
+	await expect(page.locator('input[name="rsvpStatus"]')).toHaveCount(2);
+	await expect(page.locator('input[name="rsvpStatus"][value="maybe"]')).toHaveCount(0);
 	await expect(page.locator('#rsvp-organization')).not.toHaveAttribute('required', '');
 	await page.getByLabel('Dietary requirement').fill('Vegetarian');
 	await page.getByLabel(/Instansi \/ Perusahaan/).fill('Kasir Pintar');
@@ -381,6 +383,8 @@ test('manage link personalizes and updates existing response', async ({ page }) 
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Existing Guest', { timeout: 15000 });
 	await expect(page.locator('.go-response')).toContainText('Your RSVP');
 	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await expect(page.locator('input[name="editStatus"]')).toHaveCount(2);
+	await expect(page.locator('input[name="editStatus"][value="maybe"]')).toHaveCount(0);
 	await expect(page.locator('#edit-organization')).toHaveValue('Kasir Pintar');
 	await page.locator('#edit-organization').fill('Kasir Pintar East');
 	await page.locator('input[value="declined"]').check({ force: true });
