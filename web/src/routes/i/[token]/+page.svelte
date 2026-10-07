@@ -63,6 +63,9 @@
 	const linkedRecipientName = $derived(
 		($page.url.searchParams.get('to') || '').trim().slice(0, 120)
 	);
+	const linkedRecipientRole = $derived(
+		($page.url.searchParams.get('jabatan') || '').trim().slice(0, 200)
+	);
 
 	// A comment is "mine" if I posted it this session, or its author matches my
 	// submitted name (best-effort client-side hint; the server is authoritative).
@@ -355,6 +358,7 @@
 				customData={typeof inviteData.customData === 'string' ? inviteData.customData : JSON.stringify(inviteData.customData || {})}
 				timezone={eventData.timezone}
 				recipientName={linkedRecipientName}
+				recipientRole={linkedRecipientRole}
 			/>
 		</div>
 

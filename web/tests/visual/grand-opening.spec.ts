@@ -86,6 +86,26 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	expect(errors).toEqual([]);
 });
 
+test('URL personalizes recipient name and role as plain text', async ({ page }) => {
+	await page.goto('/i/test?to=Edward%20Sumanto&jabatan=CEO%20of%20Food%20Taste%20Agency');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Edward Sumanto');
+	await expect(page.locator('.go-cover-host em')).toHaveText('CEO of Food Taste Agency');
+	await page.goto('/i/test?to=Edward&jabatan=%3Cb%3ECEO%3C%2Fb%3E');
+	await expect(page.locator('.go-cover-host em')).toHaveText('<b>CEO</b>');
+	await expect(page.locator('.go-cover-host em b')).toHaveCount(0);
+});
+
+test('empty recipient parameters preserve configured name and role', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event, questions: [], invite: { ...invite, customData: JSON.stringify({
+			recipientName: 'Configured Guest', recipientRole: 'Director of Example Co'
+		}) }
+	} } }));
+	await page.goto('/i/test?to=%20&jabatan=%20');
+	await expect(page.locator('.go-cover-host strong')).toHaveText('Configured Guest');
+	await expect(page.locator('.go-cover-host em')).toHaveText('Director of Example Co');
+});
+
 test('non-YouTube video providers remain linked instead of embedded', async ({ page }) => {
 	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
 		event, questions, invite: { ...invite, customData: JSON.stringify({ videoUrl: 'https://example.com/story-video' }) }

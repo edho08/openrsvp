@@ -29,11 +29,12 @@
 		timezone?: string;
 		customData?: string | Record<string, unknown>;
 		recipientName?: string;
+		recipientRole?: string;
 		rsvpPreview?: RsvpPreviewModel;
 	}
 	let { rsvpContent, heading, body, footer, primaryColor, secondaryColor,
 		font, eventTitle, eventDescription = '', eventDate, endDate, eventLocation,
-		timezone, customData = '{}', recipientName = '',
+		timezone, customData = '{}', recipientName = '', recipientRole: linkedRecipientRole = '',
 		rsvpPreview = { collectOrganization: false, emailRequired: true, phoneRequired: false, showEmail: true, showPhone: false, contactChoiceRequired: false, questions: [] } }: Props = $props();
 
 	const asset = (name: string) => `/invite/grand-opening/${name}.webp`;
@@ -117,7 +118,7 @@
 	const title = $derived(text(data.heroTitle, heading === "You're Invited!" ? 'Grand Opening' : heading || 'Grand Opening'));
 	const recipient = $derived(text(recipientName, text(data.recipientName, 'Tamu Undangan')));
 	const recipientPrefix = $derived(text(data.recipientPrefix, 'To :'));
-	const recipientRole = $derived(text(data.recipientRole, text(data.hostRole, '')));
+	const recipientRole = $derived(text(linkedRecipientRole, text(data.recipientRole, text(data.hostRole, ''))));
 	const intro = $derived(text(data.intro, body && body !== 'Join us for a wonderful celebration.' && body !== 'Dengan penuh rasa syukur, kami mengundang Anda untuk merayakan babak baru perjalanan Kasir Pintar.' ? body : 'kami mengundang Bapak/Ibu untuk hadir dalam momen spesial peresmian kantor baru Kasir Pintar.'));
 	const storyTitle = $derived(text(data.storyTitle === 'Bertumbuh bersama, melayani lebih banyak usaha' ? '' : data.storyTitle, 'Perjalanan Kasir Pintar Bersama UMKM Indonesia'));
 	const videoCaption = $derived(text(data.videoCaption, 'Terus berusaha tumbuh bersama UMKM Indonesia'));

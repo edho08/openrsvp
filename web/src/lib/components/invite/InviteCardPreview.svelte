@@ -30,6 +30,7 @@
 		customData?: string | Record<string, unknown>;
 		timezone?: string;
 		recipientName?: string;
+		recipientRole?: string;
 		rsvpPreview?: RsvpPreviewModel;
 	}
 
@@ -50,6 +51,7 @@
 		customData = '{}',
 		timezone,
 		recipientName = '',
+		recipientRole = '',
 		rsvpPreview
 	}: Props = $props();
 
@@ -231,6 +233,7 @@
 		{timezone}
 		customData={parsedCustomData}
 		recipientName={recipientName || (typeof parsedCustomData.recipientName === 'string' ? parsedCustomData.recipientName : '')}
+		{recipientRole}
 		{rsvpPreview}
 	/>
 {:else}
