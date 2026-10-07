@@ -402,11 +402,6 @@ func (s *Service) SubmitRSVP(ctx context.Context, shareToken string, req RSVPReq
 		}
 	}
 
-	// When SMS is disabled, email is always required regardless of contact requirement.
-	if !s.smsEnabled && !hasEmail {
-		return nil, validationErrorf("email is required")
-	}
-
 	// Acquire per-event mutex for capacity checks.
 	if ev.MaxCapacity != nil {
 		mu := getEventMutex(ev.ID)

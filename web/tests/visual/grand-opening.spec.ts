@@ -132,6 +132,30 @@ test('Grand Opening accepts phone instead of email when event allows either cont
 	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
 });
 
+test('email-or-phone RSVP stores a phone number while SMS is disabled', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', async route => {
+		if (route.request().method() === 'POST') {
+			const payload = route.request().postDataJSON();
+			expect(payload.email).toBe('');
+			expect(payload.phone).toBe('+14155552671');
+			await route.fulfill({ json: { data: { rsvpToken: 'manage' } } });
+		} else {
+			await route.fulfill({ json: { data: {
+				event: { ...event, contactRequirement: 'email_or_phone' }, invite, questions: []
+			} } });
+		}
+	});
+	await page.goto('/i/test');
+	await expect(page.locator('#rsvp-email')).toBeVisible();
+	await expect(page.locator('#rsvp-phone')).toBeVisible();
+	await expect(page.getByText('Provide either an email address or a phone number.')).toBeVisible();
+	await page.locator('#rsvp-name').fill('Phone Guest');
+	await page.locator('#rsvp-phone').fill('+1 415 555 2671');
+	await expect(page.locator('#rsvp-email')).not.toHaveAttribute('required', '');
+	await page.getByRole('button', { name: 'KIRIM RSVP', exact: true }).click();
+	await expect(page.getByText('RSVP Received!', { exact: true })).toBeVisible();
+});
+
 test('optional organization field is hidden when the event setting is off', async ({ page }) => {
 	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
 		event: { ...event, collectOrganization: false }, invite, questions: []

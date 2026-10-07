@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api/client';
-	import { smsEnabled, loadAppConfig } from '$lib/stores/config';
+	import { loadAppConfig } from '$lib/stores/config';
 	import { formatDateTime } from '$lib/utils/dates';
 	import type { PublicEvent, InviteCard, PublicAttendance, EventQuestion, ApiError, PublicComment, PaginatedComments } from '$lib/types';
 	import InviteCardPreview from '$lib/components/invite/InviteCardPreview.svelte';
@@ -157,14 +157,14 @@
 
 	const contactReq = $derived(eventData?.contactRequirement ?? 'email_or_phone');
 	const emailRequired = $derived(
-		!$smsEnabled || contactReq === 'email' || contactReq === 'email_and_phone'
+		contactReq === 'email' || contactReq === 'email_and_phone'
 	);
 	const phoneRequired = $derived(
-		$smsEnabled && (contactReq === 'phone' || contactReq === 'email_and_phone')
+		contactReq === 'phone' || contactReq === 'email_and_phone'
 	);
-	const showEmail = $derived(emailRequired || (contactReq === 'email_or_phone' && $smsEnabled));
-	const showPhone = $derived(phoneRequired || (contactReq === 'email_or_phone' && $smsEnabled));
-	const contactChoiceRequired = $derived(contactReq === 'email_or_phone' && $smsEnabled);
+	const showEmail = $derived(emailRequired || contactReq === 'email_or_phone');
+	const showPhone = $derived(phoneRequired || contactReq === 'email_or_phone');
+	const contactChoiceRequired = $derived(contactReq === 'email_or_phone');
 
 	// RSVP deadline display logic
 	const deadlineText = $derived.by(() => {
@@ -209,12 +209,6 @@
 		// matches the E.164 format the API requires.
 		const normalizedPhone = phone.replace(/[\s\-.()   ‐-—−/]/g, '');
 		const hasPhone = !!normalizedPhone;
-
-		// When SMS is disabled, email is always required.
-		if (!$smsEnabled && !hasEmail) {
-			submitError = 'Email is required.';
-			return;
-		}
 
 		if (contactReq === 'email' && !hasEmail) {
 			submitError = 'Email is required.';
@@ -584,7 +578,7 @@
 							<div>
 								<label for="rsvp-email" class="block text-sm font-medium text-neutral-700 mb-1.5">
 									Email Address
-									{#if emailRequired}
+									{#if emailRequired || (contactChoiceRequired && !phone.trim())}
 										<span class="text-error">*</span>
 									{:else}
 										<span class="text-neutral-400 font-normal">(optional)</span>
@@ -606,7 +600,7 @@
 							<div>
 								<label for="rsvp-phone" class="block text-sm font-medium text-neutral-700 mb-1.5">
 									Phone Number
-									{#if phoneRequired}
+									{#if phoneRequired || (contactChoiceRequired && !email.trim())}
 										<span class="text-error">*</span>
 									{:else}
 										<span class="text-neutral-400 font-normal">(optional)</span>

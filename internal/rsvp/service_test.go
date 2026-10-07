@@ -510,7 +510,6 @@ func TestSubmitRSVPContactRequirementBoth(t *testing.T) {
 
 func TestSubmitRSVPContactRequirementEmailOrPhone(t *testing.T) {
 	svc, eventSvc, authStore := setupRSVP(t)
-	svc.SetSMSEnabled(true)
 	ctx := context.Background()
 	org, err := authStore.CreateOrganizer(ctx, "org@example.com")
 	require.NoError(t, err)
@@ -523,10 +522,16 @@ func TestSubmitRSVPContactRequirementEmailOrPhone(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Phone only — should succeed.
-	_, err = svc.SubmitRSVP(ctx, ev.ShareToken, RSVPRequest{
-		Name: "Bob", Phone: strPtr("+15551234567"), RSVPStatus: "attending", ContactMethod: "sms",
+	attendee, err := svc.SubmitRSVP(ctx, ev.ShareToken, RSVPRequest{
+		Name: "Bob", Phone: strPtr("+15551234567"), RSVPStatus: "attending",
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, attendee.Phone)
+	assert.Equal(t, "+15551234567", *attendee.Phone)
+	stored, err := svc.store.FindByID(ctx, attendee.ID)
+	require.NoError(t, err)
+	require.NotNil(t, stored.Phone)
+	assert.Equal(t, "+15551234567", *stored.Phone)
 
 	// Neither — should fail.
 	_, err = svc.SubmitRSVP(ctx, ev.ShareToken, RSVPRequest{
