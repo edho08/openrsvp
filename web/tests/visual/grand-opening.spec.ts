@@ -57,6 +57,7 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	page.on('pageerror', error => errors.push(error.message));
 	await page.goto('/i/test?to=Rina%20Pratama');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Rina Pratama', { timeout: 15000 });
+	await expect(page.locator('.go-opening-letter small')).toHaveText('23 Oktober 2026 · 08:00 WIB');
 	await expect(page.locator('.go-value-card')).toHaveCount(4);
 	await expect(page.locator('.go-building-placeholder')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Kasir Pintar di LinkedIn' })).toHaveCount(0);

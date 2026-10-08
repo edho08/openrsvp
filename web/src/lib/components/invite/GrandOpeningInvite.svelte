@@ -203,7 +203,7 @@
 	<section class="go-cover" bind:this={coverScene} aria-labelledby="go-cover-title"
 		style="--go-open-progress: {openProgress}; --go-gate-lift: {openProgress * -130}cqw; --go-envelope-drop: {openProgress * 90 + openProgress * openProgress * 100}cqw; --go-letter-rise: {openProgress * -60}cqw;">
 		<div class="go-cover-stage"><div class="go-cover-artwork">
-			<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {zone}</small><em>Untuk {recipient}</em></div>
+			<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {time} {zone}</small><em>Untuk {recipient}</em></div>
 			<div class="go-envelope-body">
 				<img class="go-envelope-bottom" src={asset('envelope-bottom')} alt="" fetchpriority="high" />
 				<div class="go-cover-host"><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
