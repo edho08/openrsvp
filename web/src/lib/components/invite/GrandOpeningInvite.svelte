@@ -162,6 +162,26 @@
 	let failedImages = $state<string[]>([]);
 	function fail(url: string) { if (!failedImages.includes(url)) failedImages = [...failedImages, url]; }
 	let coverScene: HTMLElement;
+	function fitRecipient(node: HTMLElement, _content: string) {
+		let active = true;
+		const fit = () => {
+			if (!active || !node.clientHeight) return;
+			let scale = 1;
+			node.style.setProperty('--go-recipient-scale', '1');
+			while (node.scrollHeight > node.clientHeight + 1 && scale > 0.2) {
+				scale *= 0.95;
+				node.style.setProperty('--go-recipient-scale', String(scale));
+			}
+		};
+		const observer = new ResizeObserver(fit);
+		observer.observe(node);
+		void document.fonts.ready.then(fit);
+		fit();
+		return {
+			update: () => { queueMicrotask(fit); },
+			destroy: () => { active = false; observer.disconnect(); }
+		};
+	}
 	let openProgress = $state(0);
 	onMount(() => {
 		const mobileViewport = window.matchMedia('(max-width: 700px)');
@@ -206,7 +226,7 @@
 			<div class="go-opening-letter" aria-hidden="true"><span>UNDANGAN EKSKLUSIF</span><strong>Grand Opening</strong><small>{fullDate} · {time} {zone}</small><em>Untuk {recipient}</em></div>
 			<div class="go-envelope-body">
 				<img class="go-envelope-bottom" src={asset('envelope-bottom')} alt="" fetchpriority="high" />
-				<div class="go-cover-host"><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
+				<div class="go-cover-host" use:fitRecipient={`${recipient}|${recipientRole}`}><span>{recipientPrefix}</span><strong>{recipient}</strong>{#if recipientRole}<em>{recipientRole}</em>{/if}</div>
 				<a class="go-scroll-cue" href="#go-invitation-title"><img src={asset('scroll')} alt="" /><span>Scroll ke Bawah</span></a>
 			</div>
 			<div class="go-envelope-flap">
@@ -341,10 +361,10 @@
 	.go-cover-title small { display: block; font-family: 'Grand Opening Sans', sans-serif; font-size: 4.2cqw; font-weight: 700; }
 	.go-cover-tagline { position: absolute; top: 59.63cqw; left: 7.685%; width: 84.54%; font-size: 4.6cqw; line-height: 1.2; font-weight: 700; text-shadow: .3cqw .5cqw #087d63; }
 	.go-cover-seal { position: absolute; top: 78.7cqw; left: 33.15%; width: 37.87%; }
-	.go-cover-host { position: absolute; top: 119.8cqw; left: 5%; width: 90%; }
-	.go-cover-host > span { display: block; font-size: 2.95cqw; font-weight: 700; }
-	.go-cover-host strong { display: block; font-family: 'Grand Opening Script', cursive; font-size: 11.5cqw; font-weight: 400; line-height: 1.3; margin-top: 3cqw; overflow-wrap: anywhere; }
-	.go-cover-host em { display: block; font-size: 3cqw; line-height: 1.3; }
+	.go-cover-host { position: absolute; top: 119.8cqw; left: 5%; width: 90%; height: 27cqw; }
+	.go-cover-host > span { display: block; font-size: max(12px, 2.95cqw); font-weight: 700; }
+	.go-cover-host strong { display: block; font-family: 'Grand Opening Script', cursive; font-size: calc(11.5cqw * var(--go-recipient-scale, 1)); font-weight: 400; line-height: 1.15; margin-top: 2cqw; overflow-wrap: anywhere; text-wrap: balance; }
+	.go-cover-host em { display: block; margin-top: 1cqw; font-size: max(12px, calc(3cqw * var(--go-recipient-scale, 1))); line-height: 1.3; font-style: normal; overflow-wrap: anywhere; text-wrap: balance; }
 	.go-scroll-cue { position: absolute; top: 150.2cqw; left: 25%; width: 50%; display: grid; justify-items: center; gap: 3.5cqw; font-size: 3cqw; }
 	.go-scroll-cue img { width: 8.426cqw; }
 	.go-invitation { min-height: 149.444cqw; text-align: center; padding-top: 8.8cqw; }
@@ -391,6 +411,8 @@
 	.go-response :global(> div) { width: 100%; max-width: none; }
 	.go-response :global(.bg-surface) { background: url('/invite/grand-opening/rsvp-panel.webp') center/100% 100% no-repeat; border: 0; border-radius: 3cqw; box-shadow: none; padding: 6cqw 7.5cqw; }
 	.go-response :global(form > div > label), .go-response :global(legend), .go-response :global(form .space-y-5 > div > label) { color: white; font-size: clamp(14px, 3.2cqw, 34px); line-height: 1.2; }
+	.go-response :global(form .text-neutral-400), .go-response :global(form .text-neutral-500) { color: #fff; }
+	.go-response :global(form p.text-neutral-500) { font-size: max(14px, 1.6cqw); line-height: 1.5; }
 	.go-response :global(input:not([type='radio']):not([type='checkbox']):not([aria-hidden='true'])), .go-response :global(textarea), .go-response :global(select) { background: #f7f7f7; border-radius: 3cqw; color: #303030; padding: 2cqw; min-height: 44px; font-size: max(16px, 3cqw); }
 	.go-response :global(.go-public-form-heading) { display: none; }
 	.go-response :global(.go-attendance-options) { grid-template-columns: 1fr; }

@@ -887,6 +887,10 @@
 	:global(.go-guestbook-input) { border-color: #cbded4; border-radius: .75rem; }
 	:global(.go-guestbook-button) { border-radius: 999px; background: #0ca678; padding-inline: 1.25rem; }
 	:global(.go-guestbook-entry) { padding: .85rem 0; border-color: #e2ebe5; }
+	:global(.go-guestbook .text-neutral-900), :global(.go-guestbook .text-neutral-700) { color: #303030; }
+	:global(.go-guestbook .text-neutral-400), :global(.go-guestbook .text-neutral-500) { color: #595959; }
+	:global(.go-guestbook-input) { background: #fff; color: #303030; }
+	:global(.go-guestbook-input::placeholder) { color: #595959; }
 	@media (max-width: 700px) {
 		.grand-opening-page { padding: 0; }
 		:global(.go-guestbook) { padding: 2.5rem 1.25rem 1.5rem; }

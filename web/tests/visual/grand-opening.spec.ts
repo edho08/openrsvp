@@ -89,6 +89,37 @@ test('personalized responsive invitation, fallback media and RSVP before footer'
 	expect(errors).toEqual([]);
 });
 
+test('long recipient name and role stay above the scroll cue', async ({ page }) => {
+	await page.goto('/i/test?to=Guedho%20Augnifico%20Mahardika&jabatan=CEO%20of%20Food%20Taste%20Agency');
+	await expect(page.locator('.go-cover-host em')).toHaveText('CEO of Food Taste Agency');
+	await page.evaluate(() => document.fonts.ready);
+	await expect.poll(() => page.evaluate(() => {
+		const host = document.querySelector('.go-cover-host')!;
+		const role = host.querySelector('em')!.getBoundingClientRect();
+		const cue = document.querySelector('.go-scroll-cue')!.getBoundingClientRect();
+		return role.bottom < cue.top && host.scrollHeight <= host.clientHeight + 1;
+	})).toBe(true);
+	expect(await page.locator('.go-cover-host em').evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12);
+	await page.locator('.go-cover-artwork').screenshot({ path: test.info().outputPath('long-recipient.png') });
+});
+
+test('branded form and guestbook text stays readable in dark theme', async ({ page }) => {
+	await page.route('**/api/v1/rsvp/public/test', route => route.fulfill({ json: { data: {
+		event: { ...event, contactRequirement: 'email_or_phone', commentsEnabled: true }, invite, questions: []
+	} } }));
+	await page.route('**/api/v1/comments/public/test**', route => route.fulfill({ json: { data: {
+		comments: [{ id: 'comment', authorName: 'Nuning Septiana', body: 'Looking forward to it!', createdAt: '2026-10-08T01:00:00Z' }], totalCount: 1, hasMore: false
+	} } }));
+	await page.goto('/i/test');
+	await expect(page.locator('.go-guestbook-entry')).toBeVisible();
+	await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+	await expect(page.locator('#rsvp-phone-hint')).toHaveCSS('color', 'rgb(255, 255, 255)');
+	await expect(page.locator('label[for="rsvp-organization"] span')).toHaveCSS('color', 'rgb(255, 255, 255)');
+	await expect(page.locator('.go-guestbook-entry p')).toHaveCSS('color', 'rgb(48, 48, 48)');
+	await expect(page.locator('.go-guestbook-entry .text-neutral-900')).toHaveCSS('color', 'rgb(48, 48, 48)');
+	await expect(page.locator('.go-guestbook-entry .text-neutral-400')).toHaveCSS('color', 'rgb(89, 89, 89)');
+});
+
 test('URL personalizes recipient name and role as plain text', async ({ page }) => {
 	await page.goto('/i/test?to=Edward%20Sumanto&jabatan=CEO%20of%20Food%20Taste%20Agency');
 	await expect(page.locator('.go-cover-host strong')).toHaveText('Edward Sumanto');
